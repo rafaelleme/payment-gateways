@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Rafaelleme\PaymentGateways\Core\Application\Services;
 
-use Rafaelleme\PaymentGateways\Core\Domain\Contracts\PaymentGateway;
+use Rafaelleme\PaymentGateways\Core\Domain\Contracts\GatewayContract;
 use Rafaelleme\PaymentGateways\Core\Domain\Entities\Payment;
 
 class PaymentService
 {
     public function __construct(
-        protected PaymentGateway $gateway,
+        protected GatewayContract $gateway,
     ) {
     }
 

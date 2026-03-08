@@ -13,7 +13,7 @@ use Rafaelleme\PaymentGateways\Core\Domain\Exceptions\SubscriptionException;
 use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\CustomerId;
 use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\Money;
 use Rafaelleme\PaymentGateways\Infrastructure\Gateways\Asaas\AsaasClient;
-use Rafaelleme\PaymentGateways\Infrastructure\Gateways\Asaas\AsaasSubscriptionGateway;
+use Rafaelleme\PaymentGateways\Infrastructure\Gateways\Asaas\AsaasGateway;
 
 class AsaasSubscriptionGatewayTest extends TestCase
 {
@@ -50,7 +50,7 @@ class AsaasSubscriptionGatewayTest extends TestCase
             ->method('createSubscription')
             ->willReturn($this->fakeSubscriptionResponse());
 
-        $result = (new AsaasSubscriptionGateway($client))->createSubscription($this->makeSubscription());
+        $result = (new AsaasGateway($client))->createSubscription($this->makeSubscription());
 
         $this->assertInstanceOf(Subscription::class, $result);
         $this->assertSame('sub_asaas_001', $result->id);
@@ -71,7 +71,7 @@ class AsaasSubscriptionGatewayTest extends TestCase
         $this->expectException(SubscriptionException::class);
         $this->expectExceptionMessage('Customer not found');
 
-        (new AsaasSubscriptionGateway($client))->createSubscription($this->makeSubscription());
+        (new AsaasGateway($client))->createSubscription($this->makeSubscription());
     }
 
     public function test_get_subscription_returns_subscription_entity(): void
@@ -82,7 +82,7 @@ class AsaasSubscriptionGatewayTest extends TestCase
             ->with('sub_asaas_001')
             ->willReturn($this->fakeSubscriptionResponse());
 
-        $result = (new AsaasSubscriptionGateway($client))->getSubscription('sub_asaas_001');
+        $result = (new AsaasGateway($client))->getSubscription('sub_asaas_001');
 
         $this->assertSame('sub_asaas_001', $result->id);
         $this->assertSame(SubscriptionStatus::ACTIVE, $result->status);
@@ -95,7 +95,7 @@ class AsaasSubscriptionGatewayTest extends TestCase
 
         $this->expectException(SubscriptionException::class);
 
-        (new AsaasSubscriptionGateway($client))->getSubscription('sub_missing');
+        (new AsaasGateway($client))->getSubscription('sub_missing');
     }
 
     public function test_cancel_subscription_calls_client(): void
@@ -106,7 +106,7 @@ class AsaasSubscriptionGatewayTest extends TestCase
             ->with('sub_asaas_001')
             ->willReturn([]);
 
-        (new AsaasSubscriptionGateway($client))->cancelSubscription('sub_asaas_001');
+        (new AsaasGateway($client))->cancelSubscription('sub_asaas_001');
     }
 
     public function test_cancel_subscription_throws_on_api_error(): void
@@ -119,7 +119,7 @@ class AsaasSubscriptionGatewayTest extends TestCase
         $this->expectException(SubscriptionException::class);
         $this->expectExceptionMessage('Subscription already cancelled');
 
-        (new AsaasSubscriptionGateway($client))->cancelSubscription('sub_asaas_001');
+        (new AsaasGateway($client))->cancelSubscription('sub_asaas_001');
     }
 
     public function test_get_subscription_payments_returns_payment_list(): void
@@ -138,7 +138,7 @@ class AsaasSubscriptionGatewayTest extends TestCase
             ],
         ]);
 
-        $payments = (new AsaasSubscriptionGateway($client))->getSubscriptionPayments('sub_asaas_001');
+        $payments = (new AsaasGateway($client))->getSubscriptionPayments('sub_asaas_001');
 
         $this->assertCount(1, $payments);
         $this->assertSame('pay_001', $payments[0]->id);

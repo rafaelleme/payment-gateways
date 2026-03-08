@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Rafaelleme\PaymentGateways\Infrastructure\Gateways\Asaas;
+namespace Rafaelleme\PaymentGateways\Infrastructure\Gateways\Asaas\Customers;
 
 use Rafaelleme\PaymentGateways\Core\Domain\Entities\Customer;
 

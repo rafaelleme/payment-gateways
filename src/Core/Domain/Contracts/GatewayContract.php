@@ -4,11 +4,26 @@ declare(strict_types=1);
 
 namespace Rafaelleme\PaymentGateways\Core\Domain\Contracts;
 
+use Rafaelleme\PaymentGateways\Core\Domain\Entities\Customer;
 use Rafaelleme\PaymentGateways\Core\Domain\Entities\Payment;
 use Rafaelleme\PaymentGateways\Core\Domain\Entities\Subscription;
 
-interface SubscriptionGateway
+interface GatewayContract
 {
+    // --- Payments ---
+
+    public function createPayment(Payment $payment): Payment;
+
+    public function getPayment(string $paymentId): Payment;
+
+    // --- Customers ---
+
+    public function createCustomer(Customer $customer): Customer;
+
+    public function getCustomer(string $customerId): Customer;
+
+    // --- Subscriptions ---
+
     public function createSubscription(Subscription $subscription): Subscription;
 
     public function getSubscription(string $subscriptionId): Subscription;

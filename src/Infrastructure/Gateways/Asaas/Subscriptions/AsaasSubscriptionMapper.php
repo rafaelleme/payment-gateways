@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Rafaelleme\PaymentGateways\Infrastructure\Gateways\Asaas;
+namespace Rafaelleme\PaymentGateways\Infrastructure\Gateways\Asaas\Subscriptions;
 
 use Rafaelleme\PaymentGateways\Core\Domain\Entities\Subscription;
 use Rafaelleme\PaymentGateways\Core\Domain\Enums\BillingType;

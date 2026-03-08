@@ -6,14 +6,14 @@ namespace Rafaelleme\PaymentGateways\Tests\Unit\Support;
 
 use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
-use Rafaelleme\PaymentGateways\Core\Domain\Contracts\PaymentGateway;
+use Rafaelleme\PaymentGateways\Core\Domain\Contracts\GatewayContract;
 use Rafaelleme\PaymentGateways\Support\GatewayManager;
 
 class GatewayManagerTest extends TestCase
 {
     public function test_registers_and_resolves_driver(): void
     {
-        $mock    = $this->createMock(PaymentGateway::class);
+        $mock    = $this->createMock(GatewayContract::class);
         $manager = new GatewayManager('asaas');
 
         $manager->register('asaas', fn () => $mock);
@@ -23,7 +23,7 @@ class GatewayManagerTest extends TestCase
 
     public function test_resolves_default_driver(): void
     {
-        $mock    = $this->createMock(PaymentGateway::class);
+        $mock    = $this->createMock(GatewayContract::class);
         $manager = new GatewayManager('asaas');
         $manager->register('asaas', fn () => $mock);
 
@@ -37,7 +37,8 @@ class GatewayManagerTest extends TestCase
 
         $manager->register('asaas', function () use (&$calls) {
             $calls++;
-            return $this->createMock(PaymentGateway::class);
+
+            return $this->createMock(GatewayContract::class);
         });
 
         $manager->driver('asaas');
@@ -64,7 +65,7 @@ class GatewayManagerTest extends TestCase
 
     public function test_extend_is_alias_for_register(): void
     {
-        $mock    = $this->createMock(PaymentGateway::class);
+        $mock    = $this->createMock(GatewayContract::class);
         $manager = new GatewayManager('custom');
         $manager->extend('custom', fn () => $mock);
 
@@ -74,7 +75,7 @@ class GatewayManagerTest extends TestCase
     public function test_has_returns_correct_boolean(): void
     {
         $manager = new GatewayManager();
-        $manager->register('asaas', fn () => $this->createMock(PaymentGateway::class));
+        $manager->register('asaas', fn () => $this->createMock(GatewayContract::class));
 
         $this->assertTrue($manager->has('asaas'));
         $this->assertFalse($manager->has('stripe'));

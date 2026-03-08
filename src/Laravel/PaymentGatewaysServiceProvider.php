@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Rafaelleme\PaymentGateways\Laravel;
 
 use Illuminate\Support\ServiceProvider;
-use Rafaelleme\PaymentGateways\Core\Domain\Contracts\PaymentGateway;
+use Rafaelleme\PaymentGateways\Core\Domain\Contracts\GatewayContract;
 use Rafaelleme\PaymentGateways\Infrastructure\Gateways\Asaas\AsaasClient;
 use Rafaelleme\PaymentGateways\Infrastructure\Gateways\Asaas\AsaasGateway;
 use Rafaelleme\PaymentGateways\Support\GatewayManager;
@@ -44,8 +44,8 @@ class PaymentGatewaysServiceProvider extends ServiceProvider
             return $manager;
         });
 
-        // Bind the PaymentGateway contract to the default driver
-        $this->app->bind(PaymentGateway::class, function ($app) {
+        // Bind the GatewayContract to the default driver
+        $this->app->bind(GatewayContract::class, function ($app) {
             return $app->make(GatewayManager::class)->driver();
         });
     }

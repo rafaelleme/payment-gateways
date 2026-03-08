@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace Rafaelleme\PaymentGateways\Infrastructure\Gateways;
 
-use Rafaelleme\PaymentGateways\Core\Domain\Contracts\CustomerGateway;
-use Rafaelleme\PaymentGateways\Core\Domain\Contracts\PaymentGateway;
-use Rafaelleme\PaymentGateways\Core\Domain\Contracts\SubscriptionGateway;
+use Rafaelleme\PaymentGateways\Core\Domain\Contracts\GatewayContract;
 use Rafaelleme\PaymentGateways\Core\Domain\Entities\Customer;
 use Rafaelleme\PaymentGateways\Core\Domain\Entities\Payment;
 use Rafaelleme\PaymentGateways\Core\Domain\Entities\Subscription;
@@ -14,7 +12,7 @@ use Rafaelleme\PaymentGateways\Core\Domain\Enums\PaymentStatus;
 use Rafaelleme\PaymentGateways\Core\Domain\Enums\SubscriptionStatus;
 use Rafaelleme\PaymentGateways\Core\Domain\Exceptions\SubscriptionException;
 
-class FakeGateway implements PaymentGateway, CustomerGateway, SubscriptionGateway
+class FakeGateway implements GatewayContract
 {
     /** @var array<string, Payment> */
     private array $payments = [];
@@ -30,7 +28,7 @@ class FakeGateway implements PaymentGateway, CustomerGateway, SubscriptionGatewa
 
     private int $sequence = 1;
 
-    // --- PaymentGateway ---
+    // --- Payments ---
 
     public function createPayment(Payment $payment): Payment
     {
@@ -62,7 +60,7 @@ class FakeGateway implements PaymentGateway, CustomerGateway, SubscriptionGatewa
         return $this->payments[$paymentId];
     }
 
-    // --- CustomerGateway ---
+    // --- Customers ---
 
     public function createCustomer(Customer $customer): Customer
     {
@@ -91,7 +89,7 @@ class FakeGateway implements PaymentGateway, CustomerGateway, SubscriptionGatewa
         return $this->customers[$customerId];
     }
 
-    // --- SubscriptionGateway ---
+    // --- Subscriptions ---
 
     public function createSubscription(Subscription $subscription): Subscription
     {

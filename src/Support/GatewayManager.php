@@ -6,14 +6,14 @@ namespace Rafaelleme\PaymentGateways\Support;
 
 use Closure;
 use InvalidArgumentException;
-use Rafaelleme\PaymentGateways\Core\Domain\Contracts\PaymentGateway;
+use Rafaelleme\PaymentGateways\Core\Domain\Contracts\GatewayContract;
 
 class GatewayManager
 {
     /** @var array<string, Closure> */
     private array $factories = [];
 
-    /** @var array<string, PaymentGateway> */
+    /** @var array<string, GatewayContract> */
     private array $resolved = [];
 
     private string $defaultDriver;
@@ -44,7 +44,7 @@ class GatewayManager
     /**
      * Resolve and return a gateway driver instance.
      */
-    public function driver(?string $name = null): PaymentGateway
+    public function driver(?string $name = null): GatewayContract
     {
         $name ??= $this->getDefaultDriver();
 
