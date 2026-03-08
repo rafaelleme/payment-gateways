@@ -1,6 +1,6 @@
 {
   "name": "rafaelleme/payment-gateways",
-  "description": "Framework-agnostic payment gateway abstraction with support for multiple providers.",
+  "description": "Laravel payment gateway library with support for multiple providers, following DDD and Ports & Adapters.",
   "type": "library",
   "license": "MIT",
   "autoload": {

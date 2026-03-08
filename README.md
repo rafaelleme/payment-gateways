@@ -1,6 +1,8 @@
 # rafaelleme/payment-gateways
 
-Framework-agnostic PHP library for payment gateway integration, following **Ports and Adapters (Hexagonal Architecture)** and **DDD** principles.
+PHP library for payment gateway integration built for **Laravel**, following **DDD** and **Ports & Adapters** principles.
+
+Supports multiple providers. Currently implemented: **Asaas**.
 
 ---
 
@@ -9,14 +11,11 @@ Framework-agnostic PHP library for payment gateway integration, following **Port
 | Dependency | Version |
 |---|---|
 | PHP | ^8.1 |
+| Laravel | ^10.0\|^11.0\|^12.0 |
 | `guzzlehttp/guzzle` | ^7.0 |
 | `psr/log` | ^3.0 |
-| `illuminate/contracts` | ^10.0\|^11.0\|^12.0 |
-| `illuminate/support` | ^10.0\|^11.0\|^12.0 |
-| `illuminate/http` | ^10.0\|^11.0\|^12.0 |
-| `illuminate/routing` | ^10.0\|^11.0\|^12.0 |
 
-> When used inside a Laravel application, all `illuminate/*` packages come bundled — no extra installation needed.
+> All `illuminate/*` packages come bundled with Laravel — no extra installation needed.
 
 ---
 
@@ -26,9 +25,14 @@ Framework-agnostic PHP library for payment gateway integration, following **Port
 composer require rafaelleme/payment-gateways
 ```
 
+The `ServiceProvider` and `Facade` are auto-discovered via `composer.json`.
+
 ---
 
 ## Architecture
+
+The **core** (Domain + Application) is fully decoupled from Laravel.
+The **Laravel layer** wires everything together via `ServiceProvider`, `Facade`, `Webhooks` and route registration.
 
 ```
 src/
@@ -66,14 +70,10 @@ src/
 │   │   ├── Asaas/
 │   │   │   ├── AsaasGateway.php            # Single adapter — implements GatewayContract
 │   │   │   ├── AsaasClient.php             # HTTP communication
-│   │   │   ├── Payments/
-│   │   │   │   └── AsaasPaymentMapper.php
-│   │   │   ├── Customers/
-│   │   │   │   └── AsaasCustomerMapper.php
-│   │   │   ├── Subscriptions/
-│   │   │   │   └── AsaasSubscriptionMapper.php
-│   │   │   └── CreditCard/
-│   │   │       └── AsaasCreditCardMapper.php
+│   │   │   ├── Payments/AsaasPaymentMapper.php
+│   │   │   ├── Customers/AsaasCustomerMapper.php
+│   │   │   ├── Subscriptions/AsaasSubscriptionMapper.php
+│   │   │   └── CreditCard/AsaasCreditCardMapper.php
 │   │   └── FakeGateway.php                 # In-memory implementation for tests
 │   └── Http/
 │       └── GuzzleHttpClient.php
@@ -98,9 +98,7 @@ src/
 
 ---
 
-## Laravel Integration
-
-The package auto-discovers the `ServiceProvider` via `composer.json` `extra.laravel`.
+## Setup
 
 ### 1. Publish the config
 
@@ -124,7 +122,11 @@ ASAAS_BASE_URL=https://api.asaas.com
 
 > The consuming project controls the URL — no sandbox flag in the library.
 
-### 3. Use via Facade
+---
+
+## Usage
+
+### Via Facade
 
 ```php
 use Rafaelleme\PaymentGateways\Laravel\Facades\PaymentGateway;
@@ -164,7 +166,7 @@ $subscription = PaymentGateway::createSubscription(new Subscription(
 PaymentGateway::driver('stripe')->createPayment($payment);
 ```
 
-### 4. Use via Dependency Injection
+### Via Dependency Injection
 
 ```php
 use Rafaelleme\PaymentGateways\Core\Domain\Contracts\GatewayContract;
@@ -220,7 +222,7 @@ $subscription = new Subscription(
 );
 ```
 
-### Tokenize a card (sandbox/test)
+### Tokenize a card
 
 ```php
 use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\CreditCardData;
@@ -246,7 +248,7 @@ The package registers `POST /webhooks/asaas` automatically via the `ServiceProvi
 
 > ⚠️ Add `/webhooks/asaas` to the `$except` list in your application's `VerifyCsrfToken` middleware.
 
-### Asaas events mapped to Laravel events
+### Asaas events → Laravel events
 
 | Asaas event | Laravel event dispatched |
 |---|---|
@@ -257,7 +259,7 @@ The package registers `POST /webhooks/asaas` automatically via the `ServiceProvi
 
 Unknown events are silently ignored.
 
-### Register listeners in your application
+### Register listeners
 
 ```php
 // app/Providers/EventServiceProvider.php
@@ -272,15 +274,15 @@ protected $listen = [
 ];
 ```
 
-### Access payment data inside a listener
+### Access payment data in a listener
 
 ```php
 public function handle(PaymentReceived $event): void
 {
-    $paymentId     = $event->payment['id'];           // pay_xxx
-    $subscriptionId = $event->payment['subscription']; // sub_xxx
-    $value         = $event->payment['value'];         // 49.90
-    $status        = $event->payment['status'];        // RECEIVED
+    $event->payment['id'];           // pay_xxx
+    $event->payment['subscription']; // sub_xxx
+    $event->payment['value'];        // 49.90
+    $event->payment['status'];       // RECEIVED
 }
 ```
 
@@ -288,7 +290,7 @@ public function handle(PaymentReceived $event): void
 
 ## Error Handling
 
-Each domain context has its own typed exception:
+Each context has its own typed exception:
 
 ```php
 use Rafaelleme\PaymentGateways\Core\Domain\Exceptions\PaymentException;
@@ -296,22 +298,16 @@ use Rafaelleme\PaymentGateways\Core\Domain\Exceptions\CustomerException;
 use Rafaelleme\PaymentGateways\Core\Domain\Exceptions\SubscriptionException;
 
 try {
-    $payment = PaymentGateway::createPayment($payment);
-} catch (PaymentException $e) {
-    // API error or unexpected empty response
-}
+    PaymentGateway::createPayment($payment);
+} catch (PaymentException $e) { ... }
 
 try {
-    $customer = PaymentGateway::getCustomer('cus_missing');
-} catch (CustomerException $e) {
-    // Customer not found
-}
+    PaymentGateway::getCustomer('cus_missing');
+} catch (CustomerException $e) { ... }
 
 try {
     PaymentGateway::cancelSubscription('sub_missing');
-} catch (SubscriptionException $e) {
-    // Subscription not found or API error
-}
+} catch (SubscriptionException $e) { ... }
 ```
 
 ---
@@ -326,34 +322,13 @@ try {
 $manager->extend('stripe', fn () => new StripeGateway(apiKey: 'sk_live_...'));
 ```
 
-That's it — no changes needed to the core or application layers.
-
----
-
-## Framework-agnostic Usage
-
-```php
-use Rafaelleme\PaymentGateways\Support\GatewayManager;
-use Rafaelleme\PaymentGateways\Infrastructure\Gateways\Asaas\AsaasClient;
-use Rafaelleme\PaymentGateways\Infrastructure\Gateways\Asaas\AsaasGateway;
-
-$manager = new GatewayManager('asaas');
-
-$manager->register('asaas', fn () => new AsaasGateway(
-    client: new AsaasClient(
-        apiKey:  'your-api-key',
-        baseUrl: 'https://api.asaas.com',
-    ),
-));
-
-$gateway = $manager->driver();
-```
+No changes needed to the core or application layers.
 
 ---
 
 ## Testing
 
-Use `FakeGateway` to test without hitting external APIs:
+Use `FakeGateway` to avoid hitting external APIs:
 
 ```php
 use Rafaelleme\PaymentGateways\Infrastructure\Gateways\FakeGateway;
@@ -368,13 +343,11 @@ $gateway->hasCustomer($customer->id); // true
 $gateway->reset();                    // clear state between tests
 ```
 
----
-
-## Running Tests
+### Running the test suite
 
 ```bash
 docker compose run --rm php ./vendor/bin/phpunit
-docker compose run --rm php ./vendor/bin/phpstan analyse
+docker compose run --rm php ./vendor/bin/phpstan analyze
 docker compose run --rm php ./vendor/bin/php-cs-fixer fix
 ```
 
