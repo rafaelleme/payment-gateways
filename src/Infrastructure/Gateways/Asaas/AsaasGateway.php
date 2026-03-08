@@ -149,6 +149,11 @@ class AsaasGateway implements GatewayContract
             'externalReference' => $subscription->externalReference,
         ];
 
+        if ($subscription->creditCard !== null) {
+            $payload['creditCardToken']      = $subscription->creditCard->token;
+            $payload['creditCardHolderInfo'] = $subscription->creditCard->holderInfo->toArray();
+        }
+
         $this->logger->info('asaas.createSubscription: request', ['payload' => $payload]);
 
         $data = $this->client->createSubscription($payload);

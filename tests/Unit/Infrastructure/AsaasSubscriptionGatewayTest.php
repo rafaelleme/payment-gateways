@@ -10,6 +10,8 @@ use Rafaelleme\PaymentGateways\Core\Domain\Enums\BillingType;
 use Rafaelleme\PaymentGateways\Core\Domain\Enums\SubscriptionCycle;
 use Rafaelleme\PaymentGateways\Core\Domain\Enums\SubscriptionStatus;
 use Rafaelleme\PaymentGateways\Core\Domain\Exceptions\SubscriptionException;
+use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\CreditCard;
+use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\CreditCardHolderInfo;
 use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\CustomerId;
 use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\Money;
 use Rafaelleme\PaymentGateways\Infrastructure\Gateways\Asaas\AsaasClient;
@@ -153,5 +155,58 @@ class AsaasSubscriptionGatewayTest extends TestCase
 
         $this->assertCount(1, $payments);
         $this->assertSame('pay_001', $payments[0]->id);
+    }
+
+    public function test_create_subscription_with_credit_card_sends_token_and_holder_info(): void
+    {
+        $client = $this->createMock(AsaasClient::class);
+        $client->expects($this->once())
+            ->method('createSubscription')
+            ->with($this->callback(function (array $payload): bool {
+                return $payload['creditCardToken']                       === 'tok_abc123'
+                    && $payload['creditCardHolderInfo']['name']          === 'John Doe'
+                    && $payload['creditCardHolderInfo']['cpfCnpj']       === '12345678900'
+                    && $payload['creditCardHolderInfo']['email']         === 'john@example.com'
+                    && $payload['creditCardHolderInfo']['postalCode']    === '01310-100'
+                    && $payload['creditCardHolderInfo']['addressNumber'] === '100';
+            }))
+            ->willReturn($this->fakeSubscriptionResponse());
+
+        $holderInfo = new CreditCardHolderInfo(
+            name:          'John Doe',
+            email:         'john@example.com',
+            cpfCnpj:       '12345678900',
+            postalCode:    '01310-100',
+            addressNumber: '100',
+            phone:         '11999999999',
+        );
+
+        $subscription = new Subscription(
+            customerId:  new CustomerId('cus_abc'),
+            value:       new Money(29.90),
+            billingType: BillingType::CREDIT_CARD,
+            cycle:       SubscriptionCycle::MONTHLY,
+            nextDueDate: '2026-04-01',
+            creditCard:  new CreditCard(token: 'tok_abc123', holderInfo: $holderInfo),
+        );
+
+        $result = (new AsaasGateway($client))->createSubscription($subscription);
+
+        $this->assertInstanceOf(Subscription::class, $result);
+        $this->assertSame('sub_asaas_001', $result->id);
+    }
+
+    public function test_create_subscription_without_credit_card_omits_card_fields(): void
+    {
+        $client = $this->createMock(AsaasClient::class);
+        $client->expects($this->once())
+            ->method('createSubscription')
+            ->with($this->callback(function (array $payload): bool {
+                return !isset($payload['creditCardToken'])
+                    && !isset($payload['creditCardHolderInfo']);
+            }))
+            ->willReturn($this->fakeSubscriptionResponse());
+
+        (new AsaasGateway($client))->createSubscription($this->makeSubscription());
     }
 }
