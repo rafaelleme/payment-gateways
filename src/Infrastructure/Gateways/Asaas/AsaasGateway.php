@@ -7,7 +7,7 @@ namespace Rafaelleme\PaymentGateways\Infrastructure\Gateways\Asaas;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Rafaelleme\PaymentGateways\Core\Domain\Contracts\GatewayContract;
-use Rafaelleme\PaymentGateways\Core\Domain\Entities\CreditCardToken;
+use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\CreditCardToken;
 use Rafaelleme\PaymentGateways\Core\Domain\Entities\Customer;
 use Rafaelleme\PaymentGateways\Core\Domain\Entities\Payment;
 use Rafaelleme\PaymentGateways\Core\Domain\Entities\Subscription;
@@ -20,17 +20,17 @@ use Rafaelleme\PaymentGateways\Infrastructure\Gateways\Asaas\Customers\AsaasCust
 use Rafaelleme\PaymentGateways\Infrastructure\Gateways\Asaas\Payments\AsaasPaymentMapper;
 use Rafaelleme\PaymentGateways\Infrastructure\Gateways\Asaas\Subscriptions\AsaasSubscriptionMapper;
 
-class AsaasGateway implements GatewayContract
+readonly class AsaasGateway implements GatewayContract
 {
-    private readonly AsaasPaymentMapper $paymentMapper;
-    private readonly AsaasCustomerMapper $customerMapper;
-    private readonly AsaasSubscriptionMapper $subscriptionMapper;
-    private readonly AsaasCreditCardMapper $creditCardMapper;
-    private readonly LoggerInterface $logger;
+    private AsaasPaymentMapper $paymentMapper;
+    private AsaasCustomerMapper $customerMapper;
+    private AsaasSubscriptionMapper $subscriptionMapper;
+    private AsaasCreditCardMapper $creditCardMapper;
+    private LoggerInterface $logger;
 
     public function __construct(
-        private readonly AsaasClient $client,
-        ?LoggerInterface $logger = null,
+        private AsaasClient $client,
+        ?LoggerInterface    $logger = null,
     ) {
         $this->paymentMapper      = new AsaasPaymentMapper();
         $this->customerMapper     = new AsaasCustomerMapper();

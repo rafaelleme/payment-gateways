@@ -16,7 +16,7 @@ use Rafaelleme\PaymentGateways\Support\GatewayManager;
  * @method static \Rafaelleme\PaymentGateways\Core\Domain\Entities\Subscription        getSubscription(string $subscriptionId)
  * @method static void                                                                 cancelSubscription(string $subscriptionId)
  * @method static array<int, \Rafaelleme\PaymentGateways\Core\Domain\Entities\Payment> getSubscriptionPayments(string $subscriptionId)
- * @method static \Rafaelleme\PaymentGateways\Core\Domain\Entities\CreditCardToken     tokenizeCreditCard(string $customerId, \Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\CreditCardData $cardData)
+ * @method static \Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\CreditCardToken         tokenizeCreditCard(string $customerId, \Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\CreditCardData $cardData)
  * @method static \Rafaelleme\PaymentGateways\Core\Domain\Contracts\GatewayContract    driver(?string $name = null)
  *
  * @see GatewayManager

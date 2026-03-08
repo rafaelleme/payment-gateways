@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Rafaelleme\PaymentGateways\Infrastructure\Gateways\Asaas\CreditCard;
 
-use Rafaelleme\PaymentGateways\Core\Domain\Entities\CreditCardToken;
+use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\CreditCardToken;
 
 class AsaasCreditCardMapper
 {

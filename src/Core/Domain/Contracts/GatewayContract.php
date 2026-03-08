@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Rafaelleme\PaymentGateways\Core\Domain\Contracts;
 
-use Rafaelleme\PaymentGateways\Core\Domain\Entities\CreditCardToken;
 use Rafaelleme\PaymentGateways\Core\Domain\Entities\Customer;
 use Rafaelleme\PaymentGateways\Core\Domain\Entities\Payment;
 use Rafaelleme\PaymentGateways\Core\Domain\Entities\Subscription;
 use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\CreditCardData;
+use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\CreditCardToken;
 
 interface GatewayContract
 {

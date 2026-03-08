@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Rafaelleme\PaymentGateways\Core\Domain\Entities;
+namespace Rafaelleme\PaymentGateways\Core\Domain\ValueObjects;
 
 readonly class CreditCardToken
 {

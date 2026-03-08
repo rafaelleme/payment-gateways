@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Rafaelleme\PaymentGateways\Infrastructure\Gateways;
 
 use Rafaelleme\PaymentGateways\Core\Domain\Contracts\GatewayContract;
-use Rafaelleme\PaymentGateways\Core\Domain\Entities\CreditCardToken;
+use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\CreditCardToken;
 use Rafaelleme\PaymentGateways\Core\Domain\Entities\Customer;
 use Rafaelleme\PaymentGateways\Core\Domain\Entities\Payment;
 use Rafaelleme\PaymentGateways\Core\Domain\Entities\Subscription;

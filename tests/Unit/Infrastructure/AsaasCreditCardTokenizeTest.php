@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Rafaelleme\PaymentGateways\Tests\Unit\Infrastructure;
 
 use PHPUnit\Framework\TestCase;
-use Rafaelleme\PaymentGateways\Core\Domain\Entities\CreditCardToken;
+use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\CreditCardToken;
 use Rafaelleme\PaymentGateways\Core\Domain\Exceptions\PaymentException;
 use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\CreditCardData;
 use Rafaelleme\PaymentGateways\Infrastructure\Gateways\Asaas\AsaasClient;
