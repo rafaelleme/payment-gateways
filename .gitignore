@@ -1,0 +1,25 @@
+# Dependencies
+/vendor/
+
+# IDE
+/.idea/
+/.vscode/
+*.iml
+
+# PHPUnit
+.phpunit.result.cache
+/coverage/
+
+# PHP-CS-Fixer
+.php-cs-fixer.cache
+
+# PHPStan
+/phpstan-baseline.php
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
