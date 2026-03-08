@@ -104,6 +104,17 @@ class AsaasGatewayTest extends TestCase
         (new AsaasGateway($client))->createPayment($this->makePayment());
     }
 
+    public function test_create_payment_throws_on_empty_response(): void
+    {
+        $client = $this->createMock(AsaasClient::class);
+        $client->method('createPayment')->willReturn([]);
+
+        $this->expectException(PaymentException::class);
+        $this->expectExceptionMessage('Unexpected empty response from Asaas API.');
+
+        (new AsaasGateway($client))->createPayment($this->makePayment());
+    }
+
     public function test_get_payment_throws_when_not_found(): void
     {
         $client = $this->createMock(AsaasClient::class);

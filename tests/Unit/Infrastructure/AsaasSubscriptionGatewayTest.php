@@ -74,6 +74,17 @@ class AsaasSubscriptionGatewayTest extends TestCase
         (new AsaasGateway($client))->createSubscription($this->makeSubscription());
     }
 
+    public function test_create_subscription_throws_on_empty_response(): void
+    {
+        $client = $this->createMock(AsaasClient::class);
+        $client->method('createSubscription')->willReturn([]);
+
+        $this->expectException(SubscriptionException::class);
+        $this->expectExceptionMessage('Unexpected empty response from Asaas API.');
+
+        (new AsaasGateway($client))->createSubscription($this->makeSubscription());
+    }
+
     public function test_get_subscription_returns_subscription_entity(): void
     {
         $client = $this->createMock(AsaasClient::class);

@@ -61,6 +61,11 @@ class AsaasGateway implements GatewayContract
             throw PaymentException::apiError($message);
         }
 
+        if (empty($data['id'])) {
+            $this->logger->error('asaas.createPayment: unexpected empty response', ['data' => $data]);
+            throw PaymentException::apiError('Unexpected empty response from Asaas API.');
+        }
+
         return $this->paymentMapper->toPayment($data);
     }
 
@@ -104,6 +109,11 @@ class AsaasGateway implements GatewayContract
             $message = $errors[0]['description'] ?? 'Unknown error';
             $this->logger->error('asaas.createCustomer: api error', ['message' => $message]);
             throw CustomerException::apiError($message);
+        }
+
+        if (empty($data['id'])) {
+            $this->logger->error('asaas.createCustomer: unexpected empty response', ['data' => $data]);
+            throw CustomerException::apiError('Unexpected empty response from Asaas API.');
         }
 
         return $this->customerMapper->toCustomer($data);
@@ -151,6 +161,11 @@ class AsaasGateway implements GatewayContract
             $message = $errors[0]['description'] ?? 'Unknown error';
             $this->logger->error('asaas.createSubscription: api error', ['message' => $message]);
             throw SubscriptionException::apiError($message);
+        }
+
+        if (empty($data['id'])) {
+            $this->logger->error('asaas.createSubscription: unexpected empty response', ['data' => $data]);
+            throw SubscriptionException::apiError('Unexpected empty response from Asaas API.');
         }
 
         return $this->subscriptionMapper->toSubscription($data);

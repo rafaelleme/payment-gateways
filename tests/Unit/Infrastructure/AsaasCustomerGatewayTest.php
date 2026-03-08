@@ -57,6 +57,17 @@ class AsaasCustomerGatewayTest extends TestCase
         (new AsaasGateway($client))->createCustomer($this->makeCustomer());
     }
 
+    public function test_create_customer_throws_on_empty_response(): void
+    {
+        $client = $this->createMock(AsaasClient::class);
+        $client->method('createCustomer')->willReturn([]);
+
+        $this->expectException(CustomerException::class);
+        $this->expectExceptionMessage('Unexpected empty response from Asaas API.');
+
+        (new AsaasGateway($client))->createCustomer($this->makeCustomer());
+    }
+
     public function test_get_customer_returns_customer_entity(): void
     {
         $client = $this->createMock(AsaasClient::class);
