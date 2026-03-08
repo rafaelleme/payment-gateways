@@ -8,6 +8,7 @@ use Illuminate\Support\ServiceProvider;
 use Rafaelleme\PaymentGateways\Core\Domain\Contracts\GatewayContract;
 use Rafaelleme\PaymentGateways\Infrastructure\Gateways\Asaas\AsaasClient;
 use Rafaelleme\PaymentGateways\Infrastructure\Gateways\Asaas\AsaasGateway;
+use Rafaelleme\PaymentGateways\Laravel\Webhooks\AsaasWebhookHandler;
 use Rafaelleme\PaymentGateways\Support\GatewayManager;
 
 class PaymentGatewaysServiceProvider extends ServiceProvider
@@ -45,6 +46,10 @@ class PaymentGatewaysServiceProvider extends ServiceProvider
         $this->app->bind(GatewayContract::class, function ($app) {
             return $app->make(GatewayManager::class)->driver();
         });
+
+        $this->app->bind(AsaasWebhookHandler::class, function ($app) {
+            return new AsaasWebhookHandler($app->make('events'));
+        });
     }
 
     public function boot(): void
@@ -54,5 +59,7 @@ class PaymentGatewaysServiceProvider extends ServiceProvider
                 __DIR__ . '/../../config/payment-gateways.php' => config_path('payment-gateways.php'),
             ], 'payment-gateways-config');
         }
+
+        $this->loadRoutesFrom(__DIR__ . '/routes/webhooks.php');
     }
 }
