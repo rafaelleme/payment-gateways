@@ -4,14 +4,13 @@ declare(strict_types=1);
 
 namespace Rafaelleme\PaymentGateways\Tests\Unit\Infrastructure;
 
-use GuzzleHttp\Client;
-use GuzzleHttp\Psr7\Response;
 use PHPUnit\Framework\TestCase;
 use Rafaelleme\PaymentGateways\Core\Domain\Entities\Payment;
 use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\BillingType;
 use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\CustomerId;
 use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\Money;
 use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\PaymentStatus;
+use Rafaelleme\PaymentGateways\Infrastructure\Gateways\Asaas\AsaasClient;
 use Rafaelleme\PaymentGateways\Infrastructure\Gateways\Asaas\AsaasGateway;
 
 class AsaasGatewayTest extends TestCase
@@ -29,39 +28,24 @@ class AsaasGatewayTest extends TestCase
         ];
     }
 
-    private function makeGatewayWithMockedHttp(string $method, string $path, array $responseBody): AsaasGateway
+    private function makePayment(): Payment
     {
-        $gateway = $this->getMockBuilder(AsaasGateway::class)
-            ->setConstructorArgs(['fake-api-key', 'https://api.asaas.com/v3'])
-            ->onlyMethods([])
-            ->getMock();
-
-        $httpMock = $this->createMock(Client::class);
-        $response = new Response(200, [], json_encode($responseBody));
-
-        $httpMock->expects($this->once())
-            ->method($method)
-            ->with($path, $this->anything())
-            ->willReturn($response);
-
-        $reflection = new \ReflectionProperty(AsaasGateway::class, 'http');
-        $reflection->setValue($gateway, $httpMock);
-
-        return $gateway;
-    }
-
-    public function test_create_payment_returns_payment_entity(): void
-    {
-        $gateway = $this->makeGatewayWithMockedHttp('post', '/payments', $this->fakeAsaasResponse());
-
-        $payment = new Payment(
+        return new Payment(
             customerId:  new CustomerId('cus_abc'),
             value:       new Money(250.00),
             billingType: BillingType::PIX,
             dueDate:     '2026-04-15',
         );
+    }
 
-        $result = $gateway->createPayment($payment);
+    public function test_create_payment_returns_payment_entity(): void
+    {
+        $client = $this->createMock(AsaasClient::class);
+        $client->expects($this->once())
+            ->method('createPayment')
+            ->willReturn($this->fakeAsaasResponse());
+
+        $result = (new AsaasGateway($client))->createPayment($this->makePayment());
 
         $this->assertInstanceOf(Payment::class, $result);
         $this->assertSame('pay_asaas_123', $result->id);
@@ -74,26 +58,35 @@ class AsaasGatewayTest extends TestCase
 
     public function test_get_payment_returns_payment_entity(): void
     {
-        $responseBody           = $this->fakeAsaasResponse();
-        $responseBody['status'] = 'CONFIRMED';
+        $response           = $this->fakeAsaasResponse();
+        $response['status'] = 'CONFIRMED';
 
-        $httpMock = $this->createMock(Client::class);
-        $response = new Response(200, [], json_encode($responseBody));
-
-        $httpMock->expects($this->once())
-            ->method('get')
-            ->with('/payments/pay_asaas_123')
+        $client = $this->createMock(AsaasClient::class);
+        $client->expects($this->once())
+            ->method('getPayment')
+            ->with('pay_asaas_123')
             ->willReturn($response);
 
-        $gateway    = new AsaasGateway('fake-api-key');
-        $reflection = new \ReflectionProperty(AsaasGateway::class, 'http');
-        $reflection->setValue($gateway, $httpMock);
-
-        $result = $gateway->getPayment('pay_asaas_123');
+        $result = (new AsaasGateway($client))->getPayment('pay_asaas_123');
 
         $this->assertInstanceOf(Payment::class, $result);
         $this->assertSame('pay_asaas_123', $result->id);
         $this->assertSame(PaymentStatus::CONFIRMED, $result->status);
         $this->assertTrue($result->isPaid());
+    }
+
+    public function test_pix_fields_are_mapped_when_present(): void
+    {
+        $response              = $this->fakeAsaasResponse();
+        $response['pixQrCode'] = 'qr_code_base64';
+        $response['pixKey']    = 'chave@pix.com';
+
+        $client = $this->createMock(AsaasClient::class);
+        $client->method('createPayment')->willReturn($response);
+
+        $result = (new AsaasGateway($client))->createPayment($this->makePayment());
+
+        $this->assertSame('qr_code_base64', $result->pixQrCode);
+        $this->assertSame('chave@pix.com', $result->pixKey);
     }
 }

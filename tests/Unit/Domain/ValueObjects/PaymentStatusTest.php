@@ -38,4 +38,25 @@ class PaymentStatusTest extends TestCase
         $this->assertSame('Aguardando Pagamento', PaymentStatus::PENDING->label());
         $this->assertSame('Confirmado', PaymentStatus::CONFIRMED->label());
     }
+
+    public function test_from_asaas_maps_known_values(): void
+    {
+        $this->assertSame(PaymentStatus::CONFIRMED, PaymentStatus::fromAsaas('CONFIRMED'));
+        $this->assertSame(PaymentStatus::RECEIVED, PaymentStatus::fromAsaas('RECEIVED'));
+        $this->assertSame(PaymentStatus::RECEIVED, PaymentStatus::fromAsaas('DUNNING_RECEIVED'));
+        $this->assertSame(PaymentStatus::OVERDUE, PaymentStatus::fromAsaas('OVERDUE'));
+        $this->assertSame(PaymentStatus::OVERDUE, PaymentStatus::fromAsaas('DUNNING_REQUESTED'));
+        $this->assertSame(PaymentStatus::REFUNDED, PaymentStatus::fromAsaas('REFUNDED'));
+        $this->assertSame(PaymentStatus::REFUNDED, PaymentStatus::fromAsaas('REFUND_IN_PROGRESS'));
+        $this->assertSame(PaymentStatus::CANCELLED, PaymentStatus::fromAsaas('CHARGEBACK_REQUESTED'));
+        $this->assertSame(PaymentStatus::CANCELLED, PaymentStatus::fromAsaas('CHARGEBACK_DISPUTE'));
+    }
+
+    public function test_from_asaas_returns_pending_for_unknown_value(): void
+    {
+        $this->assertSame(PaymentStatus::PENDING, PaymentStatus::fromAsaas('PENDING'));
+        $this->assertSame(PaymentStatus::PENDING, PaymentStatus::fromAsaas('AWAITING_RISK_ANALYSIS'));
+        $this->assertSame(PaymentStatus::PENDING, PaymentStatus::fromAsaas(''));
+        $this->assertSame(PaymentStatus::PENDING, PaymentStatus::fromAsaas('UNKNOWN'));
+    }
 }

@@ -8,8 +8,8 @@ use Illuminate\Support\Facades\Facade;
 use Rafaelleme\PaymentGateways\Support\GatewayManager;
 
 /**
- * @method static \Rafaelleme\PaymentGateways\Core\Domain\Entities\Payment        createPayment(\Rafaelleme\PaymentGateways\Core\Domain\Entities\Payment $payment)
- * @method static \Rafaelleme\PaymentGateways\Core\Domain\Entities\Payment        getPayment(string $paymentId)
+ * @method static \Rafaelleme\PaymentGateways\Core\Domain\Entities\Payment         createPayment(\Rafaelleme\PaymentGateways\Core\Domain\Entities\Payment $payment)
+ * @method static \Rafaelleme\PaymentGateways\Core\Domain\Entities\Payment         getPayment(string $paymentId)
  * @method static \Rafaelleme\PaymentGateways\Core\Domain\Contracts\PaymentGateway driver(?string $name = null)
  *
  * @see GatewayManager

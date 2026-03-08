@@ -32,4 +32,19 @@ class BillingTypeTest extends TestCase
 
         $this->assertSame(BillingType::PIX, $type);
     }
+
+    public function test_from_asaas_maps_known_values(): void
+    {
+        $this->assertSame(BillingType::BOLETO, BillingType::fromAsaas('BOLETO'));
+        $this->assertSame(BillingType::PIX, BillingType::fromAsaas('PIX'));
+        $this->assertSame(BillingType::CREDIT_CARD, BillingType::fromAsaas('CREDIT_CARD'));
+        $this->assertSame(BillingType::DEBIT_CARD, BillingType::fromAsaas('DEBIT_CARD'));
+        $this->assertSame(BillingType::TRANSFER, BillingType::fromAsaas('TRANSFER'));
+    }
+
+    public function test_from_asaas_returns_undefined_for_unknown_value(): void
+    {
+        $this->assertSame(BillingType::UNDEFINED, BillingType::fromAsaas('UNKNOWN'));
+        $this->assertSame(BillingType::UNDEFINED, BillingType::fromAsaas(''));
+    }
 }

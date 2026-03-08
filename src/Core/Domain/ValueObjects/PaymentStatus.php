@@ -12,16 +12,30 @@ enum PaymentStatus: string
     case OVERDUE   = 'OVERDUE';
     case REFUNDED  = 'REFUNDED';
     case CANCELLED = 'CANCELLED';
+    case FAILED    = 'FAILED';
+
+    public static function fromAsaas(string $value): self
+    {
+        return match ($value) {
+            'CONFIRMED' => self::CONFIRMED,
+            'RECEIVED', 'DUNNING_RECEIVED' => self::RECEIVED,
+            'OVERDUE', 'DUNNING_REQUESTED' => self::OVERDUE,
+            'REFUNDED', 'REFUND_IN_PROGRESS' => self::REFUNDED,
+            'CHARGEBACK_REQUESTED', 'CHARGEBACK_DISPUTE' => self::CANCELLED,
+            default => self::PENDING,
+        };
+    }
 
     public function label(): string
     {
-        return match($this) {
+        return match ($this) {
             self::PENDING   => 'Aguardando Pagamento',
             self::CONFIRMED => 'Confirmado',
             self::RECEIVED  => 'Recebido',
             self::OVERDUE   => 'Vencido',
             self::REFUNDED  => 'Estornado',
             self::CANCELLED => 'Cancelado',
+            self::FAILED    => 'Falhou',
         };
     }
 

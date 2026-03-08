@@ -13,6 +13,18 @@ enum BillingType: string
     case TRANSFER    = 'TRANSFER';
     case UNDEFINED   = 'UNDEFINED';
 
+    public static function fromAsaas(string $value): self
+    {
+        return match($value) {
+            'BOLETO'      => self::BOLETO,
+            'PIX'         => self::PIX,
+            'CREDIT_CARD' => self::CREDIT_CARD,
+            'DEBIT_CARD'  => self::DEBIT_CARD,
+            'TRANSFER'    => self::TRANSFER,
+            default       => self::UNDEFINED,
+        };
+    }
+
     public function label(): string
     {
         return match($this) {

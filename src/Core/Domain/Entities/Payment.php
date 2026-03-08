@@ -21,6 +21,8 @@ readonly class Payment
         public ?string        $id = null,
         public ?PaymentStatus $status = null,
         public ?string        $invoiceUrl = null,
+        public ?string        $pixQrCode = null,
+        public ?string        $pixKey = null,
     ) {
     }
 
@@ -48,6 +50,8 @@ readonly class Payment
             'description'       => $this->description,
             'externalReference' => $this->externalReference,
             'invoiceUrl'        => $this->invoiceUrl,
+            'pixQrCode'         => $this->pixQrCode,
+            'pixKey'            => $this->pixKey,
         ];
     }
 }

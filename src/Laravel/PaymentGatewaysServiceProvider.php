@@ -6,6 +6,7 @@ namespace Rafaelleme\PaymentGateways\Laravel;
 
 use Illuminate\Support\ServiceProvider;
 use Rafaelleme\PaymentGateways\Core\Domain\Contracts\PaymentGateway;
+use Rafaelleme\PaymentGateways\Infrastructure\Gateways\Asaas\AsaasClient;
 use Rafaelleme\PaymentGateways\Infrastructure\Gateways\Asaas\AsaasGateway;
 use Rafaelleme\PaymentGateways\Support\GatewayManager;
 
@@ -33,8 +34,10 @@ class PaymentGatewaysServiceProvider extends ServiceProvider
                     : ($asaasConfig['base_url'] ?? 'https://api.asaas.com/v3');
 
                 return new AsaasGateway(
-                    apiKey:  $asaasConfig['api_key'],
-                    baseUrl: $baseUrl,
+                    client: new AsaasClient(
+                        apiKey:  $asaasConfig['api_key'],
+                        baseUrl: $baseUrl,
+                    ),
                 );
             });
 
