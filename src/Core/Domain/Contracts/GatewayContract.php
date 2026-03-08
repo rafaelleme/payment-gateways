@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Rafaelleme\PaymentGateways\Core\Domain\Contracts;
 
+use Rafaelleme\PaymentGateways\Core\Domain\Entities\CreditCardToken;
 use Rafaelleme\PaymentGateways\Core\Domain\Entities\Customer;
 use Rafaelleme\PaymentGateways\Core\Domain\Entities\Payment;
 use Rafaelleme\PaymentGateways\Core\Domain\Entities\Subscription;
+use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\CreditCardData;
 
 interface GatewayContract
 {
@@ -32,4 +34,8 @@ interface GatewayContract
 
     /** @return array<int, Payment> */
     public function getSubscriptionPayments(string $subscriptionId): array;
+
+    // --- Credit Card ---
+
+    public function tokenizeCreditCard(string $customerId, CreditCardData $cardData): CreditCardToken;
 }

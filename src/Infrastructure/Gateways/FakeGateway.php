@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Rafaelleme\PaymentGateways\Infrastructure\Gateways;
 
 use Rafaelleme\PaymentGateways\Core\Domain\Contracts\GatewayContract;
+use Rafaelleme\PaymentGateways\Core\Domain\Entities\CreditCardToken;
 use Rafaelleme\PaymentGateways\Core\Domain\Entities\Customer;
 use Rafaelleme\PaymentGateways\Core\Domain\Entities\Payment;
 use Rafaelleme\PaymentGateways\Core\Domain\Entities\Subscription;
@@ -12,6 +13,7 @@ use Rafaelleme\PaymentGateways\Core\Domain\Enums\PaymentStatus;
 use Rafaelleme\PaymentGateways\Core\Domain\Enums\SubscriptionStatus;
 use Rafaelleme\PaymentGateways\Core\Domain\Exceptions\CustomerException;
 use Rafaelleme\PaymentGateways\Core\Domain\Exceptions\SubscriptionException;
+use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\CreditCardData;
 
 class FakeGateway implements GatewayContract
 {
@@ -160,7 +162,16 @@ class FakeGateway implements GatewayContract
         return $this->subscriptionPayments[$subscriptionId] ?? [];
     }
 
-    // --- Test helpers ---
+    // --- Credit Card ---
+
+    public function tokenizeCreditCard(string $customerId, CreditCardData $cardData): CreditCardToken
+    {
+        return new CreditCardToken(
+            token:       'fake_tok_' . $this->sequence++,
+            brand:       'VISA',
+            last4Digits: substr($cardData->number, -4),
+        );
+    }
 
     public function hasPayment(string $paymentId): bool
     {

@@ -7,12 +7,15 @@ namespace Rafaelleme\PaymentGateways\Infrastructure\Gateways\Asaas;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Rafaelleme\PaymentGateways\Core\Domain\Contracts\GatewayContract;
+use Rafaelleme\PaymentGateways\Core\Domain\Entities\CreditCardToken;
 use Rafaelleme\PaymentGateways\Core\Domain\Entities\Customer;
 use Rafaelleme\PaymentGateways\Core\Domain\Entities\Payment;
 use Rafaelleme\PaymentGateways\Core\Domain\Entities\Subscription;
 use Rafaelleme\PaymentGateways\Core\Domain\Exceptions\CustomerException;
 use Rafaelleme\PaymentGateways\Core\Domain\Exceptions\PaymentException;
 use Rafaelleme\PaymentGateways\Core\Domain\Exceptions\SubscriptionException;
+use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\CreditCardData;
+use Rafaelleme\PaymentGateways\Infrastructure\Gateways\Asaas\CreditCard\AsaasCreditCardMapper;
 use Rafaelleme\PaymentGateways\Infrastructure\Gateways\Asaas\Customers\AsaasCustomerMapper;
 use Rafaelleme\PaymentGateways\Infrastructure\Gateways\Asaas\Payments\AsaasPaymentMapper;
 use Rafaelleme\PaymentGateways\Infrastructure\Gateways\Asaas\Subscriptions\AsaasSubscriptionMapper;
@@ -22,6 +25,7 @@ class AsaasGateway implements GatewayContract
     private readonly AsaasPaymentMapper $paymentMapper;
     private readonly AsaasCustomerMapper $customerMapper;
     private readonly AsaasSubscriptionMapper $subscriptionMapper;
+    private readonly AsaasCreditCardMapper $creditCardMapper;
     private readonly LoggerInterface $logger;
 
     public function __construct(
@@ -31,6 +35,7 @@ class AsaasGateway implements GatewayContract
         $this->paymentMapper      = new AsaasPaymentMapper();
         $this->customerMapper     = new AsaasCustomerMapper();
         $this->subscriptionMapper = new AsaasSubscriptionMapper();
+        $this->creditCardMapper   = new AsaasCreditCardMapper();
         $this->logger             = $logger ?? new NullLogger();
     }
 
@@ -230,5 +235,36 @@ class AsaasGateway implements GatewayContract
             fn (array $item) => $this->paymentMapper->toPayment($item),
             $items,
         );
+    }
+
+    // --- Credit Card ---
+
+    public function tokenizeCreditCard(string $customerId, CreditCardData $cardData): CreditCardToken
+    {
+        $payload = [
+            'customer'   => $customerId,
+            'creditCard' => $cardData->toArray(),
+        ];
+
+        $this->logger->info('asaas.tokenizeCreditCard: request', ['customerId' => $customerId]);
+
+        $data = $this->client->tokenizeCreditCard($payload);
+
+        $this->logger->info('asaas.tokenizeCreditCard: response', ['data' => $data]);
+
+        if (isset($data['errors'])) {
+            /** @var array<int, array<string, string>> $errors */
+            $errors  = $data['errors'];
+            $message = $errors[0]['description'] ?? 'Unknown error';
+            $this->logger->error('asaas.tokenizeCreditCard: api error', ['message' => $message]);
+            throw PaymentException::apiError($message);
+        }
+
+        if (empty($data['creditCardToken'])) {
+            $this->logger->error('asaas.tokenizeCreditCard: unexpected empty response', ['data' => $data]);
+            throw PaymentException::apiError('Unexpected empty response from Asaas API.');
+        }
+
+        return $this->creditCardMapper->toToken($data);
     }
 }

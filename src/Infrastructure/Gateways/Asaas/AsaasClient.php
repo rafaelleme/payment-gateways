@@ -87,4 +87,15 @@ class AsaasClient
     {
         return $this->http->get("/v3/subscriptions/{$subscriptionId}/payments");
     }
+
+    // --- Credit Card ---
+
+    /**
+     * @param  array<string, mixed> $payload
+     * @return array<string, mixed>
+     */
+    public function tokenizeCreditCard(array $payload): array
+    {
+        return $this->http->post('/v3/creditCard/tokenize', ['json' => $payload]);
+    }
 }
