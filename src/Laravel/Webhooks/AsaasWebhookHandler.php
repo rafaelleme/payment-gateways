@@ -24,10 +24,10 @@ readonly class AsaasWebhookHandler
 
         match ($event) {
             'PAYMENT_RECEIVED',
-            'PAYMENT_CONFIRMED'  => $this->events->dispatch(new PaymentReceived($payment)),
-            'PAYMENT_OVERDUE'    => $this->events->dispatch(new PaymentOverdue($payment)),
-            'PAYMENT_REFUSED'    => $this->events->dispatch(new PaymentRefused($payment)),
-            default              => null,
+            'PAYMENT_CONFIRMED' => $this->events->dispatch(new PaymentReceived($payment)),
+            'PAYMENT_OVERDUE'   => $this->events->dispatch(new PaymentOverdue($payment)),
+            'PAYMENT_REFUSED'   => $this->events->dispatch(new PaymentRefused($payment)),
+            default             => null,
         };
     }
 }
