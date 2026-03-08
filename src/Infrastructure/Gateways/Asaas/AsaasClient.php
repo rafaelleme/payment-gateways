@@ -13,7 +13,7 @@ class AsaasClient
 
     public function __construct(
         string $apiKey,
-        string $baseUrl = 'https://api.asaas.com/v3',
+        string $baseUrl = 'https://api.asaas.com',
     ) {
         $this->http = new GuzzleHttpClient(
             baseUri: $baseUrl,
@@ -30,7 +30,7 @@ class AsaasClient
     /** @return array<string, mixed> */
     public function getPayment(string $paymentId): array
     {
-        return $this->http->get("/payments/{$paymentId}");
+        return $this->http->get("/v3/payments/{$paymentId}");
     }
 
     /**
@@ -39,7 +39,7 @@ class AsaasClient
      */
     public function createPayment(array $payload): array
     {
-        return $this->http->post('/payments', ['json' => $payload]);
+        return $this->http->post('/v3/payments', ['json' => $payload]);
     }
 
     // --- Customers ---
@@ -50,13 +50,13 @@ class AsaasClient
      */
     public function createCustomer(array $payload): array
     {
-        return $this->http->post('/customers', ['json' => $payload]);
+        return $this->http->post('/v3/customers', ['json' => $payload]);
     }
 
     /** @return array<string, mixed> */
     public function getCustomer(string $customerId): array
     {
-        return $this->http->get("/customers/{$customerId}");
+        return $this->http->get("/v3/customers/{$customerId}");
     }
 
     // --- Subscriptions ---
@@ -67,24 +67,24 @@ class AsaasClient
      */
     public function createSubscription(array $payload): array
     {
-        return $this->http->post('/subscriptions', ['json' => $payload]);
+        return $this->http->post('/v3/subscriptions', ['json' => $payload]);
     }
 
     /** @return array<string, mixed> */
     public function getSubscription(string $subscriptionId): array
     {
-        return $this->http->get("/subscriptions/{$subscriptionId}");
+        return $this->http->get("/v3/subscriptions/{$subscriptionId}");
     }
 
     /** @return array<string, mixed> */
     public function cancelSubscription(string $subscriptionId): array
     {
-        return $this->http->delete("/subscriptions/{$subscriptionId}");
+        return $this->http->delete("/v3/subscriptions/{$subscriptionId}");
     }
 
     /** @return array<string, mixed> */
     public function getSubscriptionPayments(string $subscriptionId): array
     {
-        return $this->http->get("/subscriptions/{$subscriptionId}/payments");
+        return $this->http->get("/v3/subscriptions/{$subscriptionId}/payments");
     }
 }

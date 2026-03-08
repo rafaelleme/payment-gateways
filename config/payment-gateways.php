@@ -25,8 +25,8 @@ return [
     | Supported drivers: "asaas"
     |
     | Asaas URLs:
-    |   Production: https://api.asaas.com/v3
-    |   Sandbox:    https://sandbox.asaas.com/api/v3
+    |   Production: https://api.asaas.com
+    |   Sandbox:    https://api-sandbox.asaas.com
     |
     */
 
@@ -34,7 +34,7 @@ return [
         'asaas' => [
             'driver'   => 'asaas',
             'api_key'  => env('ASAAS_API_KEY', ''),
-            'base_url' => env('ASAAS_BASE_URL', 'https://api.asaas.com/v3'),
+            'base_url' => env('ASAAS_BASE_URL', 'https://api.asaas.com'),
         ],
     ],
 ];
