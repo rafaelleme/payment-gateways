@@ -4,6 +4,19 @@ Framework-agnostic PHP library for payment gateway integration, following **Port
 
 ---
 
+## Requirements
+
+| Dependency | Version |
+|---|---|
+| PHP | ^8.1 |
+| `guzzlehttp/guzzle` | ^7.0 |
+| `psr/log` | ^3.0 |
+| `illuminate/contracts` | ^10.0\|^11.0\|^12.0 |
+
+> **Laravel integration** also requires `illuminate/support`, `illuminate/http` and `illuminate/routing` — these come bundled with any Laravel installation.
+
+---
+
 ## Installation
 
 ```bash
@@ -19,131 +32,72 @@ src/
 ├── Core/
 │   ├── Domain/
 │   │   ├── Contracts/
-│   │   │   └── PaymentGateway.php       # Port (interface)
+│   │   │   └── GatewayContract.php         # Single port (payments + customers + subscriptions)
 │   │   ├── Entities/
-│   │   │   └── Payment.php              # Entity — input and output
-│   │   └── ValueObjects/
-│   │       ├── BillingType.php          # enum
-│   │       ├── CustomerId.php
-│   │       ├── Money.php
-│   │       └── PaymentStatus.php        # enum
+│   │   │   ├── Payment.php
+│   │   │   ├── Customer.php
+│   │   │   └── Subscription.php
+│   │   ├── ValueObjects/
+│   │   │   ├── Money.php
+│   │   │   ├── CustomerId.php
+│   │   │   ├── CreditCard.php
+│   │   │   ├── CreditCardData.php
+│   │   │   ├── CreditCardHolderInfo.php
+│   │   │   └── CreditCardToken.php
+│   │   ├── Enums/
+│   │   │   ├── BillingType.php
+│   │   │   ├── PaymentStatus.php
+│   │   │   ├── SubscriptionCycle.php
+│   │   │   └── SubscriptionStatus.php
+│   │   └── Exceptions/
+│   │       ├── PaymentException.php
+│   │       ├── CustomerException.php
+│   │       └── SubscriptionException.php
 │   └── Application/
 │       └── Services/
-│           └── PaymentService.php
+│           ├── PaymentService.php
+│           ├── CustomerService.php
+│           └── SubscriptionService.php
 ├── Infrastructure/
-│   └── Gateways/
-│       └── Asaas/
-│           ├── AsaasGateway.php         # Adapter
-│           └── AsaasPaymentMapper.php
+│   ├── Gateways/
+│   │   ├── Asaas/
+│   │   │   ├── AsaasGateway.php            # Single adapter — implements GatewayContract
+│   │   │   ├── AsaasClient.php             # HTTP communication
+│   │   │   ├── Payments/
+│   │   │   │   └── AsaasPaymentMapper.php
+│   │   │   ├── Customers/
+│   │   │   │   └── AsaasCustomerMapper.php
+│   │   │   ├── Subscriptions/
+│   │   │   │   └── AsaasSubscriptionMapper.php
+│   │   │   └── CreditCard/
+│   │   │       └── AsaasCreditCardMapper.php
+│   │   └── FakeGateway.php                 # In-memory implementation for tests
+│   └── Http/
+│       └── GuzzleHttpClient.php
 ├── Support/
-│   └── GatewayManager.php
+│   └── GatewayManager.php                  # Driver registry with lazy loading
 └── Laravel/
     ├── PaymentGatewaysServiceProvider.php
-    └── Facades/
-        └── PaymentGateway.php
+    ├── Facades/
+    │   └── PaymentGateway.php
+    ├── Webhooks/
+    │   ├── AsaasWebhookController.php
+    │   ├── AsaasWebhookHandler.php
+    │   └── Events/
+    │       ├── PaymentReceived.php
+    │       ├── PaymentOverdue.php
+    │       └── PaymentRefused.php
+    └── routes/
+        └── webhooks.php
 ```
 
-> **No DTOs.** Gateways receive and return domain entities directly. If a result needs extra data, enrich the entity or model an Aggregate.
-
----
-
-## Domain Design
-
-### Payment entity
-
-`Payment` is the central entity. It represents both the **creation command** and the **gateway response**:
-
-| Property | Type | Nullable | Description |
-|---|---|---|---|
-| `customerId` | `CustomerId` | no | Customer identifier |
-| `value` | `Money` | no | Payment amount |
-| `billingType` | `BillingType` | no | Payment method |
-| `dueDate` | `string` | no | Due date |
-| `description` | `string` | yes | Optional description |
-| `externalReference` | `string` | yes | Your internal reference |
-| `id` | `string` | yes | Gateway ID (null before creation) |
-| `status` | `PaymentStatus` | yes | Payment status (null before creation) |
-| `invoiceUrl` | `string` | yes | Invoice URL (null before creation) |
-
-```php
-// Before creation — no id/status
-$payment = new Payment(
-    customerId:  new CustomerId('cus_abc123'),
-    value:       new Money(150.00),
-    billingType: BillingType::PIX,
-    dueDate:     '2026-04-30',
-);
-
-$payment->isPersisted(); // false
-$payment->isPaid();      // false
-
-// After gateway returns — entity enriched
-$result = $service->create($payment);
-
-$result->id;             // 'pay_xyz'
-$result->status;         // PaymentStatus::PENDING
-$result->isPersisted();  // true
-$result->isPaid();       // false
-$result->toArray();      // array representation
-```
-
----
-
-## Usage (Framework-agnostic)
-
-```php
-use Rafaelleme\PaymentGateways\Infrastructure\Gateways\Asaas\AsaasGateway;
-use Rafaelleme\PaymentGateways\Core\Application\Services\PaymentService;
-use Rafaelleme\PaymentGateways\Core\Domain\Entities\Payment;
-use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\BillingType;
-use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\CustomerId;
-use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\Money;
-
-$gateway = new AsaasGateway(
-    apiKey:  'your-api-key',
-    baseUrl: 'https://api.asaas.com/v3',
-);
-
-$service = new PaymentService($gateway);
-
-$payment = new Payment(
-    customerId:  new CustomerId('cus_abc123'),
-    value:       new Money(150.00),
-    billingType: BillingType::PIX,
-    dueDate:     '2026-04-30',
-    description: 'Order #1234',
-);
-
-$result = $service->create($payment); // returns Payment entity
-
-echo $result->id;               // pay_xyz
-echo $result->status->value;    // PENDING
-echo $result->status->label();  // Aguardando Pagamento
-echo $result->invoiceUrl;       // https://...
-```
-
-### Using the GatewayManager
-
-```php
-use Rafaelleme\PaymentGateways\Support\GatewayManager;
-use Rafaelleme\PaymentGateways\Infrastructure\Gateways\Asaas\AsaasGateway;
-
-$manager = new GatewayManager(defaultDriver: 'asaas');
-
-$manager->register('asaas', fn () => new AsaasGateway(
-    apiKey:  'your-api-key',
-    baseUrl: 'https://api.asaas.com/v3',
-));
-
-$gateway = $manager->driver();         // default driver
-$gateway = $manager->driver('asaas'); // explicit driver
-```
+> **No DTOs.** Gateways receive and return domain entities directly.
 
 ---
 
 ## Laravel Integration
 
-The package auto-discovers the ServiceProvider via `composer.json` `extra.laravel`.
+The package auto-discovers the `ServiceProvider` via `composer.json` `extra.laravel`.
 
 ### 1. Publish the config
 
@@ -157,48 +111,204 @@ php artisan vendor:publish --tag=payment-gateways-config
 PAYMENT_GATEWAY_DEFAULT=asaas
 
 ASAAS_API_KEY=your-api-key
-ASAAS_BASE_URL=https://api.asaas.com/v3
-ASAAS_SANDBOX=false
+
+# Production
+ASAAS_BASE_URL=https://api.asaas.com
+
+# Sandbox
+# ASAAS_BASE_URL=https://sandbox.asaas.com
 ```
 
-### 3. Use via Dependency Injection
+> The consuming project controls the URL — no sandbox flag in the library.
 
-```php
-use Rafaelleme\PaymentGateways\Core\Domain\Contracts\PaymentGateway;
-use Rafaelleme\PaymentGateways\Core\Domain\Entities\Payment;
-use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\BillingType;
-use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\CustomerId;
-use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\Money;
-
-class PaymentController extends Controller
-{
-    public function __construct(private PaymentGateway $gateway) {}
-
-    public function store(Request $request)
-    {
-        $result = $this->gateway->createPayment(
-            new Payment(
-                customerId:  new CustomerId($request->customer_id),
-                value:       new Money($request->amount),
-                billingType: BillingType::from($request->billing_type),
-                dueDate:     $request->due_date,
-            )
-        );
-
-        return response()->json($result->toArray());
-    }
-}
-```
-
-### 4. Use via Facade
+### 3. Use via Facade
 
 ```php
 use Rafaelleme\PaymentGateways\Laravel\Facades\PaymentGateway;
+use Rafaelleme\PaymentGateways\Core\Domain\Entities\Customer;
+use Rafaelleme\PaymentGateways\Core\Domain\Entities\Payment;
+use Rafaelleme\PaymentGateways\Core\Domain\Entities\Subscription;
+use Rafaelleme\PaymentGateways\Core\Domain\Enums\BillingType;
+use Rafaelleme\PaymentGateways\Core\Domain\Enums\SubscriptionCycle;
+use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\CustomerId;
+use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\Money;
 
-$result = PaymentGateway::createPayment($payment);
+// --- Customers ---
+$customer = PaymentGateway::createCustomer(new Customer(
+    name:    'John Doe',
+    email:   'john@example.com',
+    cpfCnpj: '12345678900',
+));
 
-// Switch driver at runtime
-$result = PaymentGateway::driver('asaas')->createPayment($payment);
+// --- Payments ---
+$payment = PaymentGateway::createPayment(new Payment(
+    customerId:  new CustomerId($customer->id),
+    value:       new Money(149.90),
+    billingType: BillingType::PIX,
+    dueDate:     '2026-05-01',
+));
+
+// --- Subscriptions ---
+$subscription = PaymentGateway::createSubscription(new Subscription(
+    customerId:  new CustomerId($customer->id),
+    value:       new Money(29.90),
+    billingType: BillingType::CREDIT_CARD,
+    cycle:       SubscriptionCycle::MONTHLY,
+    nextDueDate: '2026-05-01',
+));
+
+// --- Switch driver at runtime ---
+PaymentGateway::driver('stripe')->createPayment($payment);
+```
+
+### 4. Use via Dependency Injection
+
+```php
+use Rafaelleme\PaymentGateways\Core\Domain\Contracts\GatewayContract;
+
+class PaymentController extends Controller
+{
+    public function __construct(private GatewayContract $gateway) {}
+}
+```
+
+---
+
+## Credit Card
+
+### With token
+
+```php
+use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\CreditCard;
+use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\CreditCardHolderInfo;
+
+$subscription = new Subscription(
+    // ...
+    creditCard: new CreditCard(
+        holderInfo: new CreditCardHolderInfo(
+            name:          'John Doe',
+            email:         'john@example.com',
+            cpfCnpj:       '12345678900',
+            postalCode:    '01310-100',
+            addressNumber: '100',
+        ),
+        token: 'tok_abc123',
+    ),
+);
+```
+
+### With raw card data
+
+```php
+use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\CreditCardData;
+
+$subscription = new Subscription(
+    // ...
+    creditCard: new CreditCard(
+        holderInfo: new CreditCardHolderInfo(/* ... */),
+        cardData: new CreditCardData(
+            holderName:  'John Doe',
+            number:      '4111111111111111',
+            expiryMonth: '12',
+            expiryYear:  '2030',
+            ccv:         '123',
+        ),
+    ),
+);
+```
+
+### Tokenize a card (sandbox/test)
+
+```php
+use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\CreditCardData;
+
+$token = PaymentGateway::tokenizeCreditCard('cus_abc123', new CreditCardData(
+    holderName:  'John Doe',
+    number:      '4111111111111111',
+    expiryMonth: '12',
+    expiryYear:  '2030',
+    ccv:         '123',
+));
+
+$token->token;       // 8608b88a-f74f-4f22-b3a1-dbbfc4c42cc9
+$token->brand;       // VISA
+$token->last4Digits; // 1111
+```
+
+---
+
+## Webhooks
+
+The package registers `POST /webhooks/asaas` automatically via the `ServiceProvider`.
+
+> ⚠️ Add `/webhooks/asaas` to the `$except` list in your application's `VerifyCsrfToken` middleware.
+
+### Asaas events mapped to Laravel events
+
+| Asaas event | Laravel event dispatched |
+|---|---|
+| `PAYMENT_RECEIVED` | `PaymentReceived` |
+| `PAYMENT_CONFIRMED` | `PaymentReceived` |
+| `PAYMENT_OVERDUE` | `PaymentOverdue` |
+| `PAYMENT_REFUSED` | `PaymentRefused` |
+
+Unknown events are silently ignored.
+
+### Register listeners in your application
+
+```php
+// app/Providers/EventServiceProvider.php
+use Rafaelleme\PaymentGateways\Laravel\Webhooks\Events\PaymentReceived;
+use Rafaelleme\PaymentGateways\Laravel\Webhooks\Events\PaymentOverdue;
+use Rafaelleme\PaymentGateways\Laravel\Webhooks\Events\PaymentRefused;
+
+protected $listen = [
+    PaymentReceived::class => [HandlePaymentReceived::class],
+    PaymentOverdue::class  => [HandlePaymentOverdue::class],
+    PaymentRefused::class  => [HandlePaymentRefused::class],
+];
+```
+
+### Access payment data inside a listener
+
+```php
+public function handle(PaymentReceived $event): void
+{
+    $paymentId     = $event->payment['id'];           // pay_xxx
+    $subscriptionId = $event->payment['subscription']; // sub_xxx
+    $value         = $event->payment['value'];         // 49.90
+    $status        = $event->payment['status'];        // RECEIVED
+}
+```
+
+---
+
+## Error Handling
+
+Each domain context has its own typed exception:
+
+```php
+use Rafaelleme\PaymentGateways\Core\Domain\Exceptions\PaymentException;
+use Rafaelleme\PaymentGateways\Core\Domain\Exceptions\CustomerException;
+use Rafaelleme\PaymentGateways\Core\Domain\Exceptions\SubscriptionException;
+
+try {
+    $payment = PaymentGateway::createPayment($payment);
+} catch (PaymentException $e) {
+    // API error or unexpected empty response
+}
+
+try {
+    $customer = PaymentGateway::getCustomer('cus_missing');
+} catch (CustomerException $e) {
+    // Customer not found
+}
+
+try {
+    PaymentGateway::cancelSubscription('sub_missing');
+} catch (SubscriptionException $e) {
+    // Subscription not found or API error
+}
 ```
 
 ---
@@ -206,26 +316,54 @@ $result = PaymentGateway::driver('asaas')->createPayment($payment);
 ## Adding a New Gateway
 
 1. Create `src/Infrastructure/Gateways/{Gateway}/`
-2. Create the mapper: `{Gateway}PaymentMapper.php` — maps API response to `Payment` entity
-3. Implement the adapter: `{Gateway}Gateway.php implements PaymentGateway`
-4. Register in `GatewayManager`
+2. Implement `{Gateway}Gateway.php implements GatewayContract`
+3. Register in `GatewayManager`
 
 ```php
-$manager->extend('stripe', fn () => new StripeGateway(
-    apiKey: 'sk_live_...',
+$manager->extend('stripe', fn () => new StripeGateway(apiKey: 'sk_live_...'));
+```
+
+That's it — no changes needed to the core or application layers.
+
+---
+
+## Framework-agnostic Usage
+
+```php
+use Rafaelleme\PaymentGateways\Support\GatewayManager;
+use Rafaelleme\PaymentGateways\Infrastructure\Gateways\Asaas\AsaasClient;
+use Rafaelleme\PaymentGateways\Infrastructure\Gateways\Asaas\AsaasGateway;
+
+$manager = new GatewayManager('asaas');
+
+$manager->register('asaas', fn () => new AsaasGateway(
+    client: new AsaasClient(
+        apiKey:  'your-api-key',
+        baseUrl: 'https://api.asaas.com',
+    ),
 ));
+
+$gateway = $manager->driver();
 ```
 
 ---
 
-## Value Objects
+## Testing
 
-| Class | Type | Description |
-|-------|------|-------------|
-| `Money` | Class | Immutable. Amount + currency (default `BRL`) |
-| `BillingType` | Enum | `BOLETO`, `PIX`, `CREDIT_CARD`, `DEBIT_CARD`, `TRANSFER`, `UNDEFINED` |
-| `CustomerId` | Class | Immutable wrapper for customer ID string |
-| `PaymentStatus` | Enum | `PENDING`, `CONFIRMED`, `RECEIVED`, `OVERDUE`, `REFUNDED`, `CANCELLED` |
+Use `FakeGateway` to test without hitting external APIs:
+
+```php
+use Rafaelleme\PaymentGateways\Infrastructure\Gateways\FakeGateway;
+
+$gateway = new FakeGateway();
+
+$customer = $gateway->createCustomer(new Customer(name: 'John', email: 'j@j.com'));
+$payment  = $gateway->createPayment(new Payment(/* ... */));
+
+$gateway->hasPayment($payment->id);   // true
+$gateway->hasCustomer($customer->id); // true
+$gateway->reset();                    // clear state between tests
+```
 
 ---
 
@@ -233,15 +371,9 @@ $manager->extend('stripe', fn () => new StripeGateway(
 
 ```bash
 docker compose run --rm php ./vendor/bin/phpunit
+docker compose run --rm php ./vendor/bin/phpstan analyse
+docker compose run --rm php ./vendor/bin/php-cs-fixer fix
 ```
-
----
-
-## Requirements
-
-- PHP 8.1+
-- `guzzlehttp/guzzle` ^7.0
-- For Laravel integration: `illuminate/support` ^9.0|^10.0|^11.0
 
 ---
 

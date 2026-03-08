@@ -27,7 +27,9 @@
     "illuminate/routing": "^10.0|^11.0|^12.0"
   },
   "suggest": {
-    "illuminate/support": "Required for Laravel integration (ServiceProvider and Facade)."
+    "illuminate/support": "Required for Laravel ServiceProvider and Facade.",
+    "illuminate/http": "Required for Laravel webhook controller.",
+    "illuminate/routing": "Required for Laravel webhook route registration."
   },
   "extra": {
     "laravel": {
