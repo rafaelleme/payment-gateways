@@ -19,14 +19,4 @@ final readonly class CreditCard
             );
         }
     }
-
-    public function hasToken(): bool
-    {
-        return $this->token !== null;
-    }
-
-    public function hasCardData(): bool
-    {
-        return $this->cardData !== null;
-    }
 }

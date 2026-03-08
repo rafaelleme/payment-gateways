@@ -152,9 +152,9 @@ class AsaasGateway implements GatewayContract
         if ($subscription->creditCard !== null) {
             $payload['creditCardHolderInfo'] = $subscription->creditCard->holderInfo->toArray();
 
-            if ($subscription->creditCard->hasToken()) {
+            if ($subscription->creditCard->token !== null) {
                 $payload['creditCardToken'] = $subscription->creditCard->token;
-            } elseif ($subscription->creditCard->hasCardData()) {
+            } elseif ($subscription->creditCard->cardData !== null) {
                 $payload['creditCard'] = $subscription->creditCard->cardData->toArray();
             }
         }
