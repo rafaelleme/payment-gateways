@@ -1,7 +1,6 @@
 <?php
 
 return [
-
     /*
     |--------------------------------------------------------------------------
     | Default Payment Gateway
@@ -20,21 +19,22 @@ return [
     |--------------------------------------------------------------------------
     |
     | Here you may configure all of the payment gateways used by your
-    | application.
+    | application. The base_url is fully controlled by the consuming project —
+    | use the sandbox or production URL as needed via environment variable.
     |
     | Supported drivers: "asaas"
+    |
+    | Asaas URLs:
+    |   Production: https://api.asaas.com/v3
+    |   Sandbox:    https://sandbox.asaas.com/api/v3
     |
     */
 
     'gateways' => [
-
         'asaas' => [
             'driver'   => 'asaas',
             'api_key'  => env('ASAAS_API_KEY', ''),
             'base_url' => env('ASAAS_BASE_URL', 'https://api.asaas.com/v3'),
-            'sandbox'  => env('ASAAS_SANDBOX', false),
         ],
-
     ],
-
 ];

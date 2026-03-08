@@ -29,14 +29,10 @@ class PaymentGatewaysServiceProvider extends ServiceProvider
             $manager->register('asaas', function () use ($config, $app) {
                 $asaasConfig = $config['gateways']['asaas'];
 
-                $baseUrl = $asaasConfig['sandbox']
-                    ? 'https://sandbox.asaas.com/api/v3'
-                    : ($asaasConfig['base_url'] ?? 'https://api.asaas.com/v3');
-
                 return new AsaasGateway(
                     client: new AsaasClient(
                         apiKey:  $asaasConfig['api_key'],
-                        baseUrl: $baseUrl,
+                        baseUrl: $asaasConfig['base_url'] ?? 'https://api.asaas.com/v3',
                     ),
                     logger: $app->make('log'),
                 );
