@@ -25,6 +25,8 @@ class AsaasClient
         );
     }
 
+    // --- Payments ---
+
     /** @return array<string, mixed> */
     public function getPayment(string $paymentId): array
     {
@@ -38,5 +40,51 @@ class AsaasClient
     public function createPayment(array $payload): array
     {
         return $this->http->post('/payments', ['json' => $payload]);
+    }
+
+    // --- Customers ---
+
+    /**
+     * @param  array<string, mixed> $payload
+     * @return array<string, mixed>
+     */
+    public function createCustomer(array $payload): array
+    {
+        return $this->http->post('/customers', ['json' => $payload]);
+    }
+
+    /** @return array<string, mixed> */
+    public function getCustomer(string $customerId): array
+    {
+        return $this->http->get("/customers/{$customerId}");
+    }
+
+    // --- Subscriptions ---
+
+    /**
+     * @param  array<string, mixed> $payload
+     * @return array<string, mixed>
+     */
+    public function createSubscription(array $payload): array
+    {
+        return $this->http->post('/subscriptions', ['json' => $payload]);
+    }
+
+    /** @return array<string, mixed> */
+    public function getSubscription(string $subscriptionId): array
+    {
+        return $this->http->get("/subscriptions/{$subscriptionId}");
+    }
+
+    /** @return array<string, mixed> */
+    public function cancelSubscription(string $subscriptionId): array
+    {
+        return $this->http->delete("/subscriptions/{$subscriptionId}");
+    }
+
+    /** @return array<string, mixed> */
+    public function getSubscriptionPayments(string $subscriptionId): array
+    {
+        return $this->http->get("/subscriptions/{$subscriptionId}/payments");
     }
 }

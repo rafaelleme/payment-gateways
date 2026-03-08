@@ -4,16 +4,33 @@ declare(strict_types=1);
 
 namespace Rafaelleme\PaymentGateways\Infrastructure\Gateways;
 
+use Rafaelleme\PaymentGateways\Core\Domain\Contracts\CustomerGateway;
 use Rafaelleme\PaymentGateways\Core\Domain\Contracts\PaymentGateway;
+use Rafaelleme\PaymentGateways\Core\Domain\Contracts\SubscriptionGateway;
+use Rafaelleme\PaymentGateways\Core\Domain\Entities\Customer;
 use Rafaelleme\PaymentGateways\Core\Domain\Entities\Payment;
+use Rafaelleme\PaymentGateways\Core\Domain\Entities\Subscription;
+use Rafaelleme\PaymentGateways\Core\Domain\Exceptions\SubscriptionException;
 use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\PaymentStatus;
+use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\SubscriptionStatus;
 
-class FakeGateway implements PaymentGateway
+class FakeGateway implements PaymentGateway, CustomerGateway, SubscriptionGateway
 {
     /** @var array<string, Payment> */
     private array $payments = [];
 
+    /** @var array<string, Customer> */
+    private array $customers = [];
+
+    /** @var array<string, Subscription> */
+    private array $subscriptions = [];
+
+    /** @var array<string, array<int, Payment>> */
+    private array $subscriptionPayments = [];
+
     private int $sequence = 1;
+
+    // --- PaymentGateway ---
 
     public function createPayment(Payment $payment): Payment
     {
@@ -45,11 +62,120 @@ class FakeGateway implements PaymentGateway
         return $this->payments[$paymentId];
     }
 
-    /** Helpers for test assertions */
+    // --- CustomerGateway ---
+
+    public function createCustomer(Customer $customer): Customer
+    {
+        $id = 'fake_cus_' . $this->sequence++;
+
+        $created = new Customer(
+            name:              $customer->name,
+            email:             $customer->email,
+            phone:             $customer->phone,
+            cpfCnpj:           $customer->cpfCnpj,
+            id:                $id,
+            externalReference: $customer->externalReference,
+        );
+
+        $this->customers[$id] = $created;
+
+        return $created;
+    }
+
+    public function getCustomer(string $customerId): Customer
+    {
+        if (!isset($this->customers[$customerId])) {
+            throw SubscriptionException::customerNotFound($customerId);
+        }
+
+        return $this->customers[$customerId];
+    }
+
+    // --- SubscriptionGateway ---
+
+    public function createSubscription(Subscription $subscription): Subscription
+    {
+        $customerId = $subscription->customerId->getValue();
+
+        if (!isset($this->customers[$customerId])) {
+            throw SubscriptionException::customerNotFound($customerId);
+        }
+
+        $id = 'fake_sub_' . $this->sequence++;
+
+        $created = new Subscription(
+            customerId:        $subscription->customerId,
+            value:             $subscription->value,
+            billingType:       $subscription->billingType,
+            cycle:             $subscription->cycle,
+            nextDueDate:       $subscription->nextDueDate,
+            description:       $subscription->description,
+            externalReference: $subscription->externalReference,
+            id:                $id,
+            status:            SubscriptionStatus::ACTIVE,
+        );
+
+        $this->subscriptions[$id]        = $created;
+        $this->subscriptionPayments[$id] = [];
+
+        return $created;
+    }
+
+    public function getSubscription(string $subscriptionId): Subscription
+    {
+        if (!isset($this->subscriptions[$subscriptionId])) {
+            throw SubscriptionException::subscriptionNotFound($subscriptionId);
+        }
+
+        return $this->subscriptions[$subscriptionId];
+    }
+
+    public function cancelSubscription(string $subscriptionId): void
+    {
+        if (!isset($this->subscriptions[$subscriptionId])) {
+            throw SubscriptionException::subscriptionNotFound($subscriptionId);
+        }
+
+        $existing = $this->subscriptions[$subscriptionId];
+
+        $this->subscriptions[$subscriptionId] = new Subscription(
+            customerId:        $existing->customerId,
+            value:             $existing->value,
+            billingType:       $existing->billingType,
+            cycle:             $existing->cycle,
+            nextDueDate:       $existing->nextDueDate,
+            description:       $existing->description,
+            externalReference: $existing->externalReference,
+            id:                $existing->id,
+            status:            SubscriptionStatus::INACTIVE,
+        );
+    }
+
+    /** @return array<int, Payment> */
+    public function getSubscriptionPayments(string $subscriptionId): array
+    {
+        if (!isset($this->subscriptions[$subscriptionId])) {
+            throw SubscriptionException::subscriptionNotFound($subscriptionId);
+        }
+
+        return $this->subscriptionPayments[$subscriptionId] ?? [];
+    }
+
+    // --- Test helpers ---
 
     public function hasPayment(string $paymentId): bool
     {
         return isset($this->payments[$paymentId]);
+    }
+
+    public function hasCustomer(string $customerId): bool
+    {
+        return isset($this->customers[$customerId]);
+    }
+
+    public function hasSubscription(string $subscriptionId): bool
+    {
+        return isset($this->subscriptions[$subscriptionId]);
     }
 
     /** @return array<string, Payment> */
@@ -58,9 +184,18 @@ class FakeGateway implements PaymentGateway
         return $this->payments;
     }
 
+    /** @return array<string, Subscription> */
+    public function allSubscriptions(): array
+    {
+        return $this->subscriptions;
+    }
+
     public function reset(): void
     {
-        $this->payments = [];
-        $this->sequence = 1;
+        $this->payments             = [];
+        $this->customers            = [];
+        $this->subscriptions        = [];
+        $this->subscriptionPayments = [];
+        $this->sequence             = 1;
     }
 }

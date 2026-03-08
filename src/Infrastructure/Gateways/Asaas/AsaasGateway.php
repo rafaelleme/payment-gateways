@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Rafaelleme\PaymentGateways\Infrastructure\Gateways\Asaas;
 
+use Rafaelleme\PaymentGateways\Core\Domain\Contracts\CustomerGateway;
 use Rafaelleme\PaymentGateways\Core\Domain\Contracts\PaymentGateway;
+use Rafaelleme\PaymentGateways\Core\Domain\Contracts\SubscriptionGateway;
 use Rafaelleme\PaymentGateways\Core\Domain\Entities\Payment;
 
 class AsaasGateway implements PaymentGateway
@@ -34,5 +36,15 @@ class AsaasGateway implements PaymentGateway
         $data = $this->client->getPayment($paymentId);
 
         return $this->mapper->toPayment($data);
+    }
+
+    public function customers(): CustomerGateway
+    {
+        return new AsaasCustomerGateway($this->client);
+    }
+
+    public function subscriptions(): SubscriptionGateway
+    {
+        return new AsaasSubscriptionGateway($this->client);
     }
 }
