@@ -26,7 +26,7 @@ class PaymentGatewaysServiceProvider extends ServiceProvider
             $manager = new GatewayManager($default);
 
             // Register built-in gateways
-            $manager->register('asaas', function () use ($config) {
+            $manager->register('asaas', function () use ($config, $app) {
                 $asaasConfig = $config['gateways']['asaas'];
 
                 $baseUrl = $asaasConfig['sandbox']
@@ -38,6 +38,7 @@ class PaymentGatewaysServiceProvider extends ServiceProvider
                         apiKey:  $asaasConfig['api_key'],
                         baseUrl: $baseUrl,
                     ),
+                    logger: $app->make('log'),
                 );
             });
 
