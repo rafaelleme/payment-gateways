@@ -15,6 +15,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Grace Period
+    |--------------------------------------------------------------------------
+    |
+    | Number of days after a failed or overdue payment before the subscription
+    | is automatically cancelled. The consuming application schedules the job.
+    |
+    */
+
+    'grace_period_days' => (int) env('PAYMENT_GATEWAY_GRACE_PERIOD_DAYS', 3),
+
+    /*
+    |--------------------------------------------------------------------------
     | Payment Gateways
     |--------------------------------------------------------------------------
     |

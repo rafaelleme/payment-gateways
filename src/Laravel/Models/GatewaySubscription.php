@@ -22,12 +22,14 @@ class GatewaySubscription extends Model
         'billing_type',
         'value',
         'next_due_date',
+        'failed_at',
         'metadata',
     ];
 
     protected $casts = [
         'metadata'      => 'array',
         'next_due_date' => 'date',
+        'failed_at'     => 'datetime',
         'value'         => 'decimal:2',
     ];
 

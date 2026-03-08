@@ -104,6 +104,7 @@ class PaymentGatewaysServiceProvider extends ServiceProvider
             return new UpdatePaymentStatusOnWebhook(
                 paymentRepository:      $app->make(PaymentRepositoryContract::class),
                 subscriptionRepository: $app->make(SubscriptionRepositoryContract::class),
+                events:                 $app->make(Dispatcher::class),
                 gateway:                $app['config']['payment-gateways']['default'] ?? 'asaas',
             );
         });
