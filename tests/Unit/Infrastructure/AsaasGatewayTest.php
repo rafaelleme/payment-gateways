@@ -8,6 +8,7 @@ use PHPUnit\Framework\TestCase;
 use Rafaelleme\PaymentGateways\Core\Domain\Entities\Payment;
 use Rafaelleme\PaymentGateways\Core\Domain\Enums\BillingType;
 use Rafaelleme\PaymentGateways\Core\Domain\Enums\PaymentStatus;
+use Rafaelleme\PaymentGateways\Core\Domain\Exceptions\PaymentException;
 use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\CustomerId;
 use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\Money;
 use Rafaelleme\PaymentGateways\Infrastructure\Gateways\Asaas\AsaasClient;
@@ -88,5 +89,29 @@ class AsaasGatewayTest extends TestCase
 
         $this->assertSame('qr_code_base64', $result->pixQrCode);
         $this->assertSame('chave@pix.com', $result->pixKey);
+    }
+
+    public function test_create_payment_throws_on_api_error(): void
+    {
+        $client = $this->createMock(AsaasClient::class);
+        $client->method('createPayment')->willReturn([
+            'errors' => [['description' => 'Customer not found']],
+        ]);
+
+        $this->expectException(PaymentException::class);
+        $this->expectExceptionMessage('Customer not found');
+
+        (new AsaasGateway($client))->createPayment($this->makePayment());
+    }
+
+    public function test_get_payment_throws_when_not_found(): void
+    {
+        $client = $this->createMock(AsaasClient::class);
+        $client->method('getPayment')->willReturn([]);
+
+        $this->expectException(PaymentException::class);
+        $this->expectExceptionMessage('Payment [pay_missing] not found.');
+
+        (new AsaasGateway($client))->getPayment('pay_missing');
     }
 }

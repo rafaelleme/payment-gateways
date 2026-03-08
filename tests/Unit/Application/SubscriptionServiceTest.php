@@ -12,6 +12,7 @@ use Rafaelleme\PaymentGateways\Core\Domain\Entities\Subscription;
 use Rafaelleme\PaymentGateways\Core\Domain\Enums\BillingType;
 use Rafaelleme\PaymentGateways\Core\Domain\Enums\SubscriptionCycle;
 use Rafaelleme\PaymentGateways\Core\Domain\Enums\SubscriptionStatus;
+use Rafaelleme\PaymentGateways\Core\Domain\Exceptions\CustomerException;
 use Rafaelleme\PaymentGateways\Core\Domain\Exceptions\SubscriptionException;
 use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\CustomerId;
 use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\Money;
@@ -65,7 +66,7 @@ class SubscriptionServiceTest extends TestCase
 
     public function test_create_subscription_fails_if_customer_not_found(): void
     {
-        $this->expectException(SubscriptionException::class);
+        $this->expectException(CustomerException::class);
         $this->expectExceptionMessage('Customer [non_existent] not found.');
 
         $this->subscriptionService->create($this->makeSubscription('non_existent'));

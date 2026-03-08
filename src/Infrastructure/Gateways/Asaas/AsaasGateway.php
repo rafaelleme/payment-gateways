@@ -8,6 +8,8 @@ use Rafaelleme\PaymentGateways\Core\Domain\Contracts\GatewayContract;
 use Rafaelleme\PaymentGateways\Core\Domain\Entities\Customer;
 use Rafaelleme\PaymentGateways\Core\Domain\Entities\Payment;
 use Rafaelleme\PaymentGateways\Core\Domain\Entities\Subscription;
+use Rafaelleme\PaymentGateways\Core\Domain\Exceptions\CustomerException;
+use Rafaelleme\PaymentGateways\Core\Domain\Exceptions\PaymentException;
 use Rafaelleme\PaymentGateways\Core\Domain\Exceptions\SubscriptionException;
 use Rafaelleme\PaymentGateways\Infrastructure\Gateways\Asaas\Customers\AsaasCustomerMapper;
 use Rafaelleme\PaymentGateways\Infrastructure\Gateways\Asaas\Payments\AsaasPaymentMapper;
@@ -40,12 +42,23 @@ class AsaasGateway implements GatewayContract
             'externalReference' => $payment->externalReference,
         ]);
 
+        if (isset($data['errors'])) {
+            /** @var array<int, array<string, string>> $errors */
+            $errors  = $data['errors'];
+            $message = $errors[0]['description'] ?? 'Unknown error';
+            throw PaymentException::apiError($message);
+        }
+
         return $this->paymentMapper->toPayment($data);
     }
 
     public function getPayment(string $paymentId): Payment
     {
         $data = $this->client->getPayment($paymentId);
+
+        if (empty($data['id'])) {
+            throw PaymentException::notFound($paymentId);
+        }
 
         return $this->paymentMapper->toPayment($data);
     }
@@ -62,12 +75,23 @@ class AsaasGateway implements GatewayContract
             'externalReference' => $customer->externalReference,
         ]);
 
+        if (isset($data['errors'])) {
+            /** @var array<int, array<string, string>> $errors */
+            $errors  = $data['errors'];
+            $message = $errors[0]['description'] ?? 'Unknown error';
+            throw CustomerException::apiError($message);
+        }
+
         return $this->customerMapper->toCustomer($data);
     }
 
     public function getCustomer(string $customerId): Customer
     {
         $data = $this->client->getCustomer($customerId);
+
+        if (empty($data['id'])) {
+            throw CustomerException::notFound($customerId);
+        }
 
         return $this->customerMapper->toCustomer($data);
     }

@@ -10,6 +10,7 @@ use Rafaelleme\PaymentGateways\Core\Domain\Entities\Payment;
 use Rafaelleme\PaymentGateways\Core\Domain\Entities\Subscription;
 use Rafaelleme\PaymentGateways\Core\Domain\Enums\PaymentStatus;
 use Rafaelleme\PaymentGateways\Core\Domain\Enums\SubscriptionStatus;
+use Rafaelleme\PaymentGateways\Core\Domain\Exceptions\CustomerException;
 use Rafaelleme\PaymentGateways\Core\Domain\Exceptions\SubscriptionException;
 
 class FakeGateway implements GatewayContract
@@ -83,7 +84,7 @@ class FakeGateway implements GatewayContract
     public function getCustomer(string $customerId): Customer
     {
         if (!isset($this->customers[$customerId])) {
-            throw SubscriptionException::customerNotFound($customerId);
+            throw CustomerException::notFound($customerId);
         }
 
         return $this->customers[$customerId];
@@ -96,7 +97,7 @@ class FakeGateway implements GatewayContract
         $customerId = $subscription->customerId->getValue();
 
         if (!isset($this->customers[$customerId])) {
-            throw SubscriptionException::customerNotFound($customerId);
+            throw CustomerException::notFound($customerId);
         }
 
         $id = 'fake_sub_' . $this->sequence++;

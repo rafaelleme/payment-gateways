@@ -6,11 +6,11 @@ namespace Rafaelleme\PaymentGateways\Core\Domain\Exceptions;
 
 use RuntimeException;
 
-final class SubscriptionException extends RuntimeException
+final class CustomerException extends RuntimeException
 {
-    public static function subscriptionNotFound(string $subscriptionId): self
+    public static function notFound(string $customerId): self
     {
-        return new self("Subscription [{$subscriptionId}] not found.");
+        return new self("Customer [{$customerId}] not found.");
     }
 
     public static function apiError(string $message, int $code = 0): self
