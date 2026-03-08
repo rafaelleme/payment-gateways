@@ -12,8 +12,11 @@ Framework-agnostic PHP library for payment gateway integration, following **Port
 | `guzzlehttp/guzzle` | ^7.0 |
 | `psr/log` | ^3.0 |
 | `illuminate/contracts` | ^10.0\|^11.0\|^12.0 |
+| `illuminate/support` | ^10.0\|^11.0\|^12.0 |
+| `illuminate/http` | ^10.0\|^11.0\|^12.0 |
+| `illuminate/routing` | ^10.0\|^11.0\|^12.0 |
 
-> **Laravel integration** also requires `illuminate/support`, `illuminate/http` and `illuminate/routing` — these come bundled with any Laravel installation.
+> When used inside a Laravel application, all `illuminate/*` packages come bundled — no extra installation needed.
 
 ---
 
