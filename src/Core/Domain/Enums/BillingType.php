@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Rafaelleme\PaymentGateways\Core\Domain\ValueObjects;
+namespace Rafaelleme\PaymentGateways\Core\Domain\Enums;
 
 enum BillingType: string
 {
@@ -15,7 +15,7 @@ enum BillingType: string
 
     public static function fromAsaas(string $value): self
     {
-        return match($value) {
+        return match ($value) {
             'BOLETO'      => self::BOLETO,
             'PIX'         => self::PIX,
             'CREDIT_CARD' => self::CREDIT_CARD,
@@ -27,7 +27,7 @@ enum BillingType: string
 
     public function label(): string
     {
-        return match($this) {
+        return match ($this) {
             self::BOLETO      => 'Boleto Bancário',
             self::PIX         => 'PIX',
             self::CREDIT_CARD => 'Cartão de Crédito',

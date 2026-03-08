@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Rafaelleme\PaymentGateways\Tests\Unit\Domain\ValueObjects;
+namespace Rafaelleme\PaymentGateways\Tests\Unit\Domain\Enums;
 
 use PHPUnit\Framework\TestCase;
-use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\BillingType;
+use Rafaelleme\PaymentGateways\Core\Domain\Enums\BillingType;
 
 class BillingTypeTest extends TestCase
 {
@@ -28,9 +28,7 @@ class BillingTypeTest extends TestCase
 
     public function test_can_be_created_from_value(): void
     {
-        $type = BillingType::from('PIX');
-
-        $this->assertSame(BillingType::PIX, $type);
+        $this->assertSame(BillingType::PIX, BillingType::from('PIX'));
     }
 
     public function test_from_asaas_maps_known_values(): void

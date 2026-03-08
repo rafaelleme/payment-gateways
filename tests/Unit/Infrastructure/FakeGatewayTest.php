@@ -6,10 +6,10 @@ namespace Rafaelleme\PaymentGateways\Tests\Unit\Infrastructure;
 
 use PHPUnit\Framework\TestCase;
 use Rafaelleme\PaymentGateways\Core\Domain\Entities\Payment;
-use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\BillingType;
+use Rafaelleme\PaymentGateways\Core\Domain\Enums\BillingType;
+use Rafaelleme\PaymentGateways\Core\Domain\Enums\PaymentStatus;
 use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\CustomerId;
 use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\Money;
-use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\PaymentStatus;
 use Rafaelleme\PaymentGateways\Infrastructure\Gateways\FakeGateway;
 
 class FakeGatewayTest extends TestCase

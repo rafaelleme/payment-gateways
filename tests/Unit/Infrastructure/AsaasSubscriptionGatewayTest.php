@@ -6,12 +6,12 @@ namespace Rafaelleme\PaymentGateways\Tests\Unit\Infrastructure;
 
 use PHPUnit\Framework\TestCase;
 use Rafaelleme\PaymentGateways\Core\Domain\Entities\Subscription;
+use Rafaelleme\PaymentGateways\Core\Domain\Enums\BillingType;
+use Rafaelleme\PaymentGateways\Core\Domain\Enums\SubscriptionCycle;
+use Rafaelleme\PaymentGateways\Core\Domain\Enums\SubscriptionStatus;
 use Rafaelleme\PaymentGateways\Core\Domain\Exceptions\SubscriptionException;
-use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\BillingType;
 use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\CustomerId;
 use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\Money;
-use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\SubscriptionCycle;
-use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\SubscriptionStatus;
 use Rafaelleme\PaymentGateways\Infrastructure\Gateways\Asaas\AsaasClient;
 use Rafaelleme\PaymentGateways\Infrastructure\Gateways\Asaas\AsaasSubscriptionGateway;
 

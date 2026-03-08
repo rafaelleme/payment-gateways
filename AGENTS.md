@@ -36,6 +36,7 @@ Core/
 Domain/
 Contracts/
 Entities/
+Enums/
 ValueObjects/
 
 Application/
@@ -73,6 +74,7 @@ Conteúdo permitido no domínio:
 
 Contracts  
 Entities  
+Enums  
 ValueObjects
 
 Exemplos:
@@ -138,17 +140,57 @@ Se um retorno de gateway precisar carregar informações adicionais, enriquecer 
 
 ---
 
+# Enums
+
+Localização:
+
+src/Core/Domain/Enums
+
+Enums representam conjuntos fechados de valores nomeados do domínio.
+
+Exemplos:
+
+BillingType  
+PaymentStatus  
+SubscriptionCycle  
+SubscriptionStatus
+
+Regras:
+
+- Usar PHP 8.1+ backed enums (`enum Foo: string`)
+- Podem conter métodos de comportamento: `label()`, `isPaid()`, `isActive()`
+- Devem conter método estático `fromAsaas()` (ou `from{Gateway}()`) para isolar o mapeamento de cada gateway dentro do próprio enum
+- **Não misturar com Value Objects**
+
+Diferença entre Enum e Value Object:
+
+| Conceito | Tipo | Exemplo |
+|---|---|---|
+| Conjunto fechado de casos nomeados | Enum | `BillingType`, `PaymentStatus` |
+| Objeto imutável com valor e comportamento | Value Object | `Money`, `CustomerId` |
+
+---
+
 # Value Objects
 
-Value Objects representam valores imutáveis do domínio.
+Localização:
+
+src/Core/Domain/ValueObjects
+
+Value Objects representam valores imutáveis do domínio que possuem identidade baseada no próprio valor.
 
 Exemplos:
 
 Money  
-BillingType  
 CustomerId
 
-Devem ser imutáveis.
+Regras:
+
+- Sempre classes (`final class`), nunca enums
+- Devem ser imutáveis (propriedades `readonly` ou sem setters)
+- Podem conter validação no construtor
+- Podem conter comportamento: `equals()`, `__toString()`
+- **Não colocar enums nesta pasta**
 
 ---
 

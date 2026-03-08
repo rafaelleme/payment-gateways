@@ -10,9 +10,9 @@ use Rafaelleme\PaymentGateways\Core\Domain\Contracts\SubscriptionGateway;
 use Rafaelleme\PaymentGateways\Core\Domain\Entities\Customer;
 use Rafaelleme\PaymentGateways\Core\Domain\Entities\Payment;
 use Rafaelleme\PaymentGateways\Core\Domain\Entities\Subscription;
+use Rafaelleme\PaymentGateways\Core\Domain\Enums\PaymentStatus;
+use Rafaelleme\PaymentGateways\Core\Domain\Enums\SubscriptionStatus;
 use Rafaelleme\PaymentGateways\Core\Domain\Exceptions\SubscriptionException;
-use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\PaymentStatus;
-use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\SubscriptionStatus;
 
 class FakeGateway implements PaymentGateway, CustomerGateway, SubscriptionGateway
 {

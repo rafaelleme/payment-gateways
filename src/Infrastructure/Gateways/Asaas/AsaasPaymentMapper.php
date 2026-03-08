@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace Rafaelleme\PaymentGateways\Infrastructure\Gateways\Asaas;
 
 use Rafaelleme\PaymentGateways\Core\Domain\Entities\Payment;
-use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\BillingType;
+use Rafaelleme\PaymentGateways\Core\Domain\Enums\BillingType;
+use Rafaelleme\PaymentGateways\Core\Domain\Enums\PaymentStatus;
 use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\CustomerId;
 use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\Money;
-use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\PaymentStatus;
 
 class AsaasPaymentMapper
 {

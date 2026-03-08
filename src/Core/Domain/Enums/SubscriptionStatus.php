@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Rafaelleme\PaymentGateways\Core\Domain\ValueObjects;
+namespace Rafaelleme\PaymentGateways\Core\Domain\Enums;
 
 enum SubscriptionStatus: string
 {

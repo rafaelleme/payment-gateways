@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Rafaelleme\PaymentGateways\Tests\Unit\Domain\ValueObjects;
+namespace Rafaelleme\PaymentGateways\Tests\Unit\Domain\Enums;
 
 use PHPUnit\Framework\TestCase;
-use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\PaymentStatus;
+use Rafaelleme\PaymentGateways\Core\Domain\Enums\PaymentStatus;
 
 class PaymentStatusTest extends TestCase
 {
@@ -17,6 +17,7 @@ class PaymentStatusTest extends TestCase
         $this->assertSame('OVERDUE', PaymentStatus::OVERDUE->value);
         $this->assertSame('REFUNDED', PaymentStatus::REFUNDED->value);
         $this->assertSame('CANCELLED', PaymentStatus::CANCELLED->value);
+        $this->assertSame('FAILED', PaymentStatus::FAILED->value);
     }
 
     public function test_is_paid_returns_true_for_paid_statuses(): void
@@ -31,12 +32,14 @@ class PaymentStatusTest extends TestCase
         $this->assertFalse(PaymentStatus::OVERDUE->isPaid());
         $this->assertFalse(PaymentStatus::CANCELLED->isPaid());
         $this->assertFalse(PaymentStatus::REFUNDED->isPaid());
+        $this->assertFalse(PaymentStatus::FAILED->isPaid());
     }
 
     public function test_label_returns_human_readable_string(): void
     {
         $this->assertSame('Aguardando Pagamento', PaymentStatus::PENDING->label());
         $this->assertSame('Confirmado', PaymentStatus::CONFIRMED->label());
+        $this->assertSame('Falhou', PaymentStatus::FAILED->label());
     }
 
     public function test_from_asaas_maps_known_values(): void
