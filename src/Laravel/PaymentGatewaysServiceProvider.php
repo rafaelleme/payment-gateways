@@ -15,6 +15,7 @@ use Rafaelleme\PaymentGateways\Core\Domain\Contracts\PaymentRepositoryContract;
 use Rafaelleme\PaymentGateways\Core\Domain\Contracts\SubscriptionRepositoryContract;
 use Rafaelleme\PaymentGateways\Infrastructure\Gateways\Asaas\AsaasClient;
 use Rafaelleme\PaymentGateways\Infrastructure\Gateways\Asaas\AsaasGateway;
+use Rafaelleme\PaymentGateways\Laravel\Commands\InstallCommand;
 use Rafaelleme\PaymentGateways\Laravel\Repositories\EloquentCustomerRepository;
 use Rafaelleme\PaymentGateways\Laravel\Repositories\EloquentPaymentRepository;
 use Rafaelleme\PaymentGateways\Laravel\Repositories\EloquentSubscriptionRepository;
@@ -113,6 +114,10 @@ class PaymentGatewaysServiceProvider extends ServiceProvider
     public function boot(): void
     {
         if ($this->app->runningInConsole()) {
+            $this->commands([
+                InstallCommand::class,
+            ]);
+
             $this->publishes([
                 __DIR__ . '/../../config/payment-gateways.php' => config_path('payment-gateways.php'),
             ], 'payment-gateways-config');

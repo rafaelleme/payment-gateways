@@ -100,16 +100,38 @@ src/
 
 ## Setup
 
-### 1. Publish the config
+### 1. Run the install command
 
 ```bash
-php artisan vendor:publish --tag=payment-gateways-config
+php artisan payment-gateways:install
 ```
 
-### 2. Configure `.env`
+This command will:
+
+- Publish `config/payment-gateways.php` to your application's `config/` directory
+- Publish all migrations to your application's `database/migrations/` directory
+- Display all required `.env` variables
+
+**Options:**
+
+| Option | Description |
+|---|---|
+| `--force` | Overwrite already published files |
+| `--without-migrations` | Skip publishing migrations |
+
+### 2. Run the migrations
+
+```bash
+php artisan migrate
+```
+
+This creates the `gateway_customers`, `gateway_subscriptions` and `gateway_payments` tables.
+
+### 3. Configure `.env`
 
 ```dotenv
 PAYMENT_GATEWAY_DEFAULT=asaas
+PAYMENT_GATEWAY_GRACE_PERIOD_DAYS=3
 
 ASAAS_API_KEY=your-api-key
 
@@ -117,10 +139,41 @@ ASAAS_API_KEY=your-api-key
 ASAAS_BASE_URL=https://api.asaas.com
 
 # Sandbox
-# ASAAS_BASE_URL=https://sandbox.asaas.com
+# ASAAS_BASE_URL=https://api-sandbox.asaas.com
 ```
 
 > The consuming project controls the URL — no sandbox flag in the library.
+
+### 4. (Optional) Configure the Asaas webhook
+
+Register the following URL in the Asaas dashboard:
+
+```
+https://your-domain.com/webhooks/asaas
+```
+
+Add the route to the CSRF exception list in your application:
+
+```php
+// app/Http/Middleware/VerifyCsrfToken.php
+protected $except = [
+    'webhooks/asaas',
+];
+```
+
+---
+
+### Manual publish (alternative)
+
+If you prefer to publish assets individually:
+
+```bash
+# Config only
+php artisan vendor:publish --tag=payment-gateways-config
+
+# Migrations only
+php artisan vendor:publish --tag=payment-gateways-migrations
+```
 
 ---
 
