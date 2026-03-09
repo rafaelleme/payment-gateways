@@ -12,7 +12,7 @@ readonly class Customer
         public ?string $phone = null,
         public ?string $cpfCnpj = null,
         public ?string $id = null,
-        public ?string $externalReference = null,
+        public ?int    $externalReference = null,
     ) {
     }
 

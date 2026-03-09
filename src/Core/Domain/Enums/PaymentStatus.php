@@ -43,4 +43,9 @@ enum PaymentStatus: string
     {
         return in_array($this, [self::CONFIRMED, self::RECEIVED]);
     }
+
+    public function isFailure(): bool
+    {
+        return in_array($this, [self::OVERDUE, self::FAILED, self::CANCELLED]);
+    }
 }

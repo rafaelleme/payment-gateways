@@ -12,5 +12,8 @@ interface PaymentRepositoryContract
 
     public function updateStatus(string $gateway, string $gatewayPaymentId, string $status): void;
 
+    /** @param array<string, mixed> $webhookPayload */
+    public function upsertFromWebhook(string $gateway, array $webhookPayload, string $status): void;
+
     public function findByGatewayId(string $gateway, string $gatewayPaymentId): ?Payment;
 }

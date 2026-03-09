@@ -11,6 +11,7 @@ use Rafaelleme\PaymentGateways\Core\Domain\Enums\PaymentStatus;
 use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\CustomerId;
 use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\Money;
 use Rafaelleme\PaymentGateways\Laravel\Models\GatewayPayment;
+use Rafaelleme\PaymentGateways\Laravel\Models\GatewaySubscription;
 
 class EloquentPaymentRepository implements PaymentRepositoryContract
 {
@@ -43,6 +44,48 @@ class EloquentPaymentRepository implements PaymentRepositoryContract
                 'status'  => $status,
                 'paid_at' => in_array($status, $paidStatuses, true) ? now() : null,
             ]);
+    }
+
+    /** @param array<string, mixed> $webhookPayload */
+    public function upsertFromWebhook(string $gateway, array $webhookPayload, string $status): void
+    {
+        $paymentId = (string) ($webhookPayload['id'] ?? '');
+
+        if ($paymentId === '') {
+            return;
+        }
+
+        $paidStatuses = ['RECEIVED', 'CONFIRMED'];
+        $gatewaySubId = (string) ($webhookPayload['subscription'] ?? '');
+        $localSubId   = null;
+        $userId       = ($webhookPayload['externalReference'] ?? '') !== ''
+            ? (int) $webhookPayload['externalReference']
+            : null;
+
+        if ($gatewaySubId !== '') {
+            $localSubId = GatewaySubscription::where('gateway', $gateway)
+                ->where('gateway_subscription_id', $gatewaySubId)
+                ->value('id');
+        }
+
+        $billingType = BillingType::tryFrom((string) ($webhookPayload['billingType'] ?? ''))
+            ?? BillingType::UNDEFINED;
+
+        GatewayPayment::updateOrCreate(
+            [
+                'gateway'            => $gateway,
+                'gateway_payment_id' => $paymentId,
+            ],
+            [
+                'user_id'         => $userId,
+                'subscription_id' => $localSubId,
+                'status'          => $status,
+                'billing_type'    => $billingType->value,
+                'value'           => (float) ($webhookPayload['value'] ?? 0),
+                'due_date'        => $webhookPayload['dueDate'] ?? null,
+                'paid_at'         => in_array($status, $paidStatuses, true) ? now() : null,
+            ],
+        );
     }
 
     public function findByGatewayId(string $gateway, string $gatewayPaymentId): ?Payment

@@ -20,7 +20,7 @@ readonly class Subscription
         public SubscriptionCycle   $cycle,
         public string              $nextDueDate,
         public ?string             $description = null,
-        public ?string             $externalReference = null,
+        public ?int                $externalReference = null,
         public ?string             $id = null,
         public ?SubscriptionStatus $status = null,
         public ?CreditCard         $creditCard = null,
