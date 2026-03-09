@@ -7,6 +7,7 @@ namespace Rafaelleme\PaymentGateways\Laravel\Webhooks\Listeners;
 use Illuminate\Contracts\Events\Dispatcher;
 use Rafaelleme\PaymentGateways\Core\Domain\Contracts\PaymentRepositoryContract;
 use Rafaelleme\PaymentGateways\Core\Domain\Contracts\SubscriptionRepositoryContract;
+use Rafaelleme\PaymentGateways\Core\Domain\Enums\PaymentStatus;
 use Rafaelleme\PaymentGateways\Laravel\Models\GatewaySubscription;
 use Rafaelleme\PaymentGateways\Laravel\Webhooks\Events\PaymentOverdue;
 use Rafaelleme\PaymentGateways\Laravel\Webhooks\Events\PaymentReceived;
@@ -26,7 +27,7 @@ class UpdatePaymentStatusOnWebhook
 
     public function handleReceived(PaymentReceived $event): void
     {
-        $this->update($event->payment, 'RECEIVED');
+        $this->update($event->payment, PaymentStatus::RECEIVED);
 
         $subscriptionId = (string) ($event->payment['subscription'] ?? '');
 
@@ -46,7 +47,7 @@ class UpdatePaymentStatusOnWebhook
 
     public function handleOverdue(PaymentOverdue $event): void
     {
-        $this->update($event->payment, 'OVERDUE');
+        $this->update($event->payment, PaymentStatus::OVERDUE);
         $this->markFailedAt($event->payment);
 
         $this->events->dispatch(new SubscriptionPaymentFailed(
@@ -58,7 +59,7 @@ class UpdatePaymentStatusOnWebhook
 
     public function handleRefused(PaymentRefused $event): void
     {
-        $this->update($event->payment, 'REFUSED');
+        $this->update($event->payment, PaymentStatus::FAILED);
         $this->markFailedAt($event->payment);
 
         $this->events->dispatch(new SubscriptionPaymentFailed(
@@ -69,7 +70,7 @@ class UpdatePaymentStatusOnWebhook
     }
 
     /** @param array<string, mixed> $payment */
-    private function update(array $payment, string $status): void
+    private function update(array $payment, PaymentStatus $status): void
     {
         $paymentId = (string) ($payment['id'] ?? '');
 
@@ -77,12 +78,12 @@ class UpdatePaymentStatusOnWebhook
             return;
         }
 
-        $this->paymentRepository->updateStatus($this->gateway, $paymentId, $status);
+        $this->paymentRepository->upsertFromWebhook($this->gateway, $payment, $status->value);
 
         $subscriptionId = (string) ($payment['subscription'] ?? '');
 
-        if ($subscriptionId !== '' && in_array($status, ['OVERDUE', 'REFUSED'], true)) {
-            $this->subscriptionRepository->updateStatus($this->gateway, $subscriptionId, $status);
+        if ($subscriptionId !== '' && $status->isFailure()) {
+            $this->subscriptionRepository->updateStatus($this->gateway, $subscriptionId, $status->value);
         }
     }
 

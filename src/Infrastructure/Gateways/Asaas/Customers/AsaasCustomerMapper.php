@@ -17,7 +17,7 @@ class AsaasCustomerMapper
             phone:             isset($data['phone']) ? (string) $data['phone'] : null,
             cpfCnpj:           isset($data['cpfCnpj']) ? (string) $data['cpfCnpj'] : null,
             id:                (string) $data['id'],
-            externalReference: isset($data['externalReference']) ? (string) $data['externalReference'] : null,
+            externalReference: isset($data['externalReference']) ? (int) $data['externalReference'] : null,
         );
     }
 }

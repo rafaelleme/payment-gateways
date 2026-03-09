@@ -57,14 +57,24 @@ class AsaasWebhookHandlerTest extends TestCase
         (new AsaasWebhookHandler($dispatcher))->handle($this->payload('PAYMENT_OVERDUE'));
     }
 
-    public function test_payment_refused_dispatches_payment_refused_event(): void
+    public function test_payment_dunning_requested_dispatches_payment_overdue_event(): void
+    {
+        $dispatcher = $this->createMock(Dispatcher::class);
+        $dispatcher->expects($this->once())
+            ->method('dispatch')
+            ->with($this->isInstanceOf(PaymentOverdue::class));
+
+        (new AsaasWebhookHandler($dispatcher))->handle($this->payload('PAYMENT_DUNNING_REQUESTED'));
+    }
+
+    public function test_payment_chargeback_requested_dispatches_payment_refused_event(): void
     {
         $dispatcher = $this->createMock(Dispatcher::class);
         $dispatcher->expects($this->once())
             ->method('dispatch')
             ->with($this->isInstanceOf(PaymentRefused::class));
 
-        (new AsaasWebhookHandler($dispatcher))->handle($this->payload('PAYMENT_REFUSED'));
+        (new AsaasWebhookHandler($dispatcher))->handle($this->payload('PAYMENT_CHARGEBACK_REQUESTED'));
     }
 
     public function test_unknown_event_dispatches_nothing(): void
@@ -73,6 +83,15 @@ class AsaasWebhookHandlerTest extends TestCase
         $dispatcher->expects($this->never())->method('dispatch');
 
         (new AsaasWebhookHandler($dispatcher))->handle($this->payload('UNKNOWN_EVENT'));
+    }
+
+    public function test_payment_refused_string_is_unknown_and_dispatches_nothing(): void
+    {
+        // 'PAYMENT_REFUSED' is not a real Asaas event — should be silently ignored
+        $dispatcher = $this->createMock(Dispatcher::class);
+        $dispatcher->expects($this->never())->method('dispatch');
+
+        (new AsaasWebhookHandler($dispatcher))->handle($this->payload('PAYMENT_REFUSED'));
     }
 
     public function test_event_carries_payment_data(): void

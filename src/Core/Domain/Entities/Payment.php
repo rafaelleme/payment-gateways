@@ -17,7 +17,7 @@ readonly class Payment
         public BillingType    $billingType,
         public string         $dueDate,
         public ?string        $description = null,
-        public ?string        $externalReference = null,
+        public ?int           $externalReference = null,
         public ?string        $id = null,
         public ?PaymentStatus $status = null,
         public ?string        $invoiceUrl = null,

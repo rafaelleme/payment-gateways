@@ -21,7 +21,7 @@ class AsaasPaymentMapper
             billingType:       BillingType::fromAsaas((string) ($data['billingType'] ?? '')),
             dueDate:           (string) ($data['dueDate'] ?? ''),
             description:       isset($data['description']) ? (string) $data['description'] : null,
-            externalReference: isset($data['externalReference']) ? (string) $data['externalReference'] : null,
+            externalReference: isset($data['externalReference']) ? (int) $data['externalReference'] : null,
             id:                (string) $data['id'],
             status:            PaymentStatus::fromAsaas((string) ($data['status'] ?? '')),
             invoiceUrl:        isset($data['invoiceUrl']) ? (string) $data['invoiceUrl'] : null,

@@ -23,7 +23,7 @@ class AsaasSubscriptionMapper
             cycle:             SubscriptionCycle::fromAsaas((string) ($data['cycle'] ?? '')),
             nextDueDate:       (string) ($data['nextDueDate'] ?? ''),
             description:       isset($data['description']) ? (string) $data['description'] : null,
-            externalReference: isset($data['externalReference']) ? (string) $data['externalReference'] : null,
+            externalReference: isset($data['externalReference']) ? (int) $data['externalReference'] : null,
             id:                (string) $data['id'],
             status:            SubscriptionStatus::fromAsaas((string) ($data['status'] ?? '')),
         );

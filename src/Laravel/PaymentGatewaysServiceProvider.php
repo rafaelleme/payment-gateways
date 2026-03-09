@@ -22,7 +22,6 @@ use Rafaelleme\PaymentGateways\Laravel\Repositories\EloquentSubscriptionReposito
 use Rafaelleme\PaymentGateways\Laravel\Services\PersistentCustomerService;
 use Rafaelleme\PaymentGateways\Laravel\Services\PersistentPaymentService;
 use Rafaelleme\PaymentGateways\Laravel\Services\PersistentSubscriptionService;
-use Rafaelleme\PaymentGateways\Laravel\Webhooks\AsaasWebhookHandler;
 use Rafaelleme\PaymentGateways\Laravel\Webhooks\Events\PaymentOverdue;
 use Rafaelleme\PaymentGateways\Laravel\Webhooks\Events\PaymentReceived;
 use Rafaelleme\PaymentGateways\Laravel\Webhooks\Events\PaymentRefused;
@@ -96,13 +95,15 @@ class PaymentGatewaysServiceProvider extends ServiceProvider
         });
 
         // --- Webhook handler ---
-        $this->app->bind(AsaasWebhookHandler::class, function ($app) {
-            return new AsaasWebhookHandler($app->make(Dispatcher::class));
+        $this->app->bind(Webhooks\AsaasWebhookHandler::class, function ($app) {
+            return new Webhooks\AsaasWebhookHandler(
+                events: $app->make(Dispatcher::class),
+            );
         });
 
         // --- Webhook listener ---
-        $this->app->bind(UpdatePaymentStatusOnWebhook::class, function ($app) {
-            return new UpdatePaymentStatusOnWebhook(
+        $this->app->bind(Webhooks\Listeners\UpdatePaymentStatusOnWebhook::class, function ($app) {
+            return new Webhooks\Listeners\UpdatePaymentStatusOnWebhook(
                 paymentRepository:      $app->make(PaymentRepositoryContract::class),
                 subscriptionRepository: $app->make(SubscriptionRepositoryContract::class),
                 events:                 $app->make(Dispatcher::class),
