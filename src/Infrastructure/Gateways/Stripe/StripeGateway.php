@@ -10,7 +10,6 @@ use Rafaelleme\PaymentGateways\Core\Domain\Contracts\GatewayContract;
 use Rafaelleme\PaymentGateways\Core\Domain\Entities\Customer;
 use Rafaelleme\PaymentGateways\Core\Domain\Entities\Payment;
 use Rafaelleme\PaymentGateways\Core\Domain\Entities\Subscription;
-use Rafaelleme\PaymentGateways\Core\Domain\Enums\SubscriptionCycle;
 use Rafaelleme\PaymentGateways\Core\Domain\Exceptions\CustomerException;
 use Rafaelleme\PaymentGateways\Core\Domain\Exceptions\PaymentException;
 use Rafaelleme\PaymentGateways\Core\Domain\Exceptions\SubscriptionException;
@@ -141,61 +140,22 @@ readonly class StripeGateway implements GatewayContract
 
     public function createSubscription(Subscription $subscription): Subscription
     {
-        // Determine priceId: use provided priceId or create product and price
-        if ($subscription->priceId !== null) {
-            $priceId = $subscription->priceId;
-            $this->logger->info('stripe.createSubscription: using provided priceId', ['priceId' => $priceId]);
-        } else {
-            // First, get or create the product
-            $productPayload = [
-                'name'                        => 'Subscription',
-                'metadata[externalReference]' => $subscription->externalReference,
-            ];
-
-            $this->logger->info('stripe.createSubscription.product: request', ['payload' => $productPayload]);
-            $productData = $this->client->createProduct($productPayload);
-
-            if (isset($productData['error'])) {
-                $message = $productData['error']['message'] ?? 'Unknown error';
-                $this->logger->error('stripe.createSubscription.product: api error', ['message' => $message]);
-                throw SubscriptionException::apiError($message);
-            }
-
-            if (empty($productData['id'])) {
-                $this->logger->error('stripe.createSubscription.product: unexpected empty response', ['data' => $productData]);
-                throw SubscriptionException::apiError('Failed to create product in Stripe.');
-            }
-
-            $productId = $productData['id'];
-            $this->logger->info('stripe.createSubscription.product: response', ['productId' => $productId]);
-
-            // Create the price
-            $pricePayload = $this->buildPricePayload($subscription, $productId);
-
-            $this->logger->info('stripe.createSubscription.price: request', ['payload' => $pricePayload]);
-            $priceData = $this->client->createPrice($pricePayload);
-
-            if (isset($priceData['error'])) {
-                $message = $priceData['error']['message'] ?? 'Unknown error';
-                $this->logger->error('stripe.createSubscription.price: api error', ['message' => $message]);
-                throw SubscriptionException::apiError($message);
-            }
-
-            if (empty($priceData['id'])) {
-                $this->logger->error('stripe.createSubscription.price: unexpected empty response', ['data' => $priceData]);
-                throw SubscriptionException::apiError('Failed to create price in Stripe.');
-            }
-
-            $priceId = $priceData['id'];
-            $this->logger->info('stripe.createSubscription.price: response', ['priceId' => $priceId]);
+        if ($subscription->priceId === null) {
+            throw SubscriptionException::apiError('Price ID is required for Stripe subscriptions. Please provide a priceId.');
         }
 
-        // Create the subscription
+        // Create the subscription with pre-created price
         $subscriptionPayload = [
-            'customer'                    => $subscription->customerId->getValue(),
-            'items[0][price]'             => $priceId,
+            'customer' => $subscription->customerId->getValue(),
+            'items'    => [
+                [
+                    'price' => $subscription->priceId,
+                ],
+            ],
             'payment_behavior'            => 'default_incomplete',
-            'metadata[externalReference]' => $subscription->externalReference,
+            'metadata' => [
+                'externalReference' => $subscription->externalReference,
+            ],
             'description'                 => $subscription->description,
         ];
 
@@ -312,48 +272,5 @@ readonly class StripeGateway implements GatewayContract
         $this->client->attachPaymentMethod($data['id'], $attachPayload);
 
         return $this->creditCardMapper->toToken($data);
-    }
-
-    /** @return array<string, int|string> */
-    private function buildPricePayload(Subscription $subscription, string $productId): array
-    {
-        if ($subscription->value === null) {
-            throw SubscriptionException::apiError('Value is required when creating a price. Please provide a value or use a pre-created priceId.');
-        }
-
-        $payload = [
-            'product'                   => $productId,
-            'amount'                    => (int) ($subscription->value->getAmount() * 100),
-            'currency'                  => strtolower($subscription->value->getCurrency()),
-            'billing_scheme'            => 'per_unit',
-            'recurring[interval]'       => $this->mapCycleToStripeInterval($subscription->cycle),
-            'recurring[interval_count]' => $this->mapCycleToIntervalCount($subscription->cycle),
-        ];
-
-        return $payload;
-    }
-
-    private function mapCycleToStripeInterval(SubscriptionCycle $cycle): string
-    {
-        return match ($cycle) {
-            SubscriptionCycle::WEEKLY       => 'week',
-            SubscriptionCycle::BIWEEKLY     => 'day',
-            SubscriptionCycle::MONTHLY      => 'month',
-            SubscriptionCycle::QUARTERLY    => 'month',
-            SubscriptionCycle::SEMIANNUALLY => 'month',
-            SubscriptionCycle::YEARLY       => 'year',
-        };
-    }
-
-    private function mapCycleToIntervalCount(SubscriptionCycle $cycle): int
-    {
-        return match ($cycle) {
-            SubscriptionCycle::WEEKLY       => 1,
-            SubscriptionCycle::BIWEEKLY     => 14,
-            SubscriptionCycle::MONTHLY      => 1,
-            SubscriptionCycle::QUARTERLY    => 3,
-            SubscriptionCycle::SEMIANNUALLY => 6,
-            SubscriptionCycle::YEARLY       => 1,
-        };
     }
 }
