@@ -27,7 +27,8 @@ use Rafaelleme\PaymentGateways\Laravel\Services\PersistentSubscriptionService;
 use Rafaelleme\PaymentGateways\Laravel\Webhooks\Events\PaymentOverdue;
 use Rafaelleme\PaymentGateways\Laravel\Webhooks\Events\PaymentReceived;
 use Rafaelleme\PaymentGateways\Laravel\Webhooks\Events\PaymentRefused;
-use Rafaelleme\PaymentGateways\Laravel\Webhooks\Listeners\UpdatePaymentStatusOnWebhook;
+use Rafaelleme\PaymentGateways\Laravel\Webhooks\Listeners\UpdateAsaasPaymentStatusOnWebhook;
+use Rafaelleme\PaymentGateways\Laravel\Webhooks\Listeners\UpdateStripePaymentStatusOnWebhook;
 use Rafaelleme\PaymentGateways\Support\GatewayManager;
 
 class PaymentGatewaysServiceProvider extends ServiceProvider
@@ -132,14 +133,39 @@ class PaymentGatewaysServiceProvider extends ServiceProvider
             );
         });
 
-        // --- Webhook handler ---
+        // --- Webhook handlers ---
         $this->app->bind(Webhooks\AsaasWebhookHandler::class, function ($app) {
             return new Webhooks\AsaasWebhookHandler(
                 events: $app->make(Dispatcher::class),
+                logger: $app->make('log'),
             );
         });
 
-        // --- Webhook listener ---
+        $this->app->bind(Webhooks\StripeWebhookHandler::class, function ($app) {
+            return new Webhooks\StripeWebhookHandler(
+                events: $app->make(Dispatcher::class),
+                logger: $app->make('log'),
+            );
+        });
+
+        // --- Webhook listeners ---
+        $this->app->bind(Webhooks\Listeners\UpdateAsaasPaymentStatusOnWebhook::class, function ($app) {
+            return new Webhooks\Listeners\UpdateAsaasPaymentStatusOnWebhook(
+                paymentRepository:      $app->make(PaymentRepositoryContract::class),
+                subscriptionRepository: $app->make(SubscriptionRepositoryContract::class),
+                events:                 $app->make(Dispatcher::class),
+            );
+        });
+
+        $this->app->bind(Webhooks\Listeners\UpdateStripePaymentStatusOnWebhook::class, function ($app) {
+            return new Webhooks\Listeners\UpdateStripePaymentStatusOnWebhook(
+                paymentRepository:      $app->make(PaymentRepositoryContract::class),
+                subscriptionRepository: $app->make(SubscriptionRepositoryContract::class),
+                events:                 $app->make(Dispatcher::class),
+            );
+        });
+
+        // Keep the old binding for backwards compatibility (defaults to Asaas)
         $this->app->bind(Webhooks\Listeners\UpdatePaymentStatusOnWebhook::class, function ($app) {
             return new Webhooks\Listeners\UpdatePaymentStatusOnWebhook(
                 paymentRepository:      $app->make(PaymentRepositoryContract::class),
@@ -168,11 +194,17 @@ class PaymentGatewaysServiceProvider extends ServiceProvider
 
         $this->loadRoutesFrom(__DIR__ . '/routes/webhooks.php');
 
-        // Register webhook listener for DB persistence
+        // Register webhook listeners for DB persistence
         /** @var Dispatcher $events */
         $events = $this->app->make(Dispatcher::class);
-        $events->listen(PaymentReceived::class, [UpdatePaymentStatusOnWebhook::class, 'handleReceived']);
-        $events->listen(PaymentOverdue::class, [UpdatePaymentStatusOnWebhook::class, 'handleOverdue']);
-        $events->listen(PaymentRefused::class, [UpdatePaymentStatusOnWebhook::class, 'handleRefused']);
+
+        // Asaas listeners
+        $events->listen(PaymentReceived::class, [UpdateAsaasPaymentStatusOnWebhook::class, 'handleReceived']);
+        $events->listen(PaymentOverdue::class, [UpdateAsaasPaymentStatusOnWebhook::class, 'handleOverdue']);
+        $events->listen(PaymentRefused::class, [UpdateAsaasPaymentStatusOnWebhook::class, 'handleRefused']);
+
+        // Stripe listeners
+        $events->listen(PaymentReceived::class, [UpdateStripePaymentStatusOnWebhook::class, 'handleReceived']);
+        $events->listen(PaymentRefused::class, [UpdateStripePaymentStatusOnWebhook::class, 'handleRefused']);
     }
 }

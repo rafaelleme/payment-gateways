@@ -11,4 +11,3 @@ Route::post('/webhooks/asaas', AsaasWebhookController::class)
 
 Route::post('/webhooks/stripe', StripeWebhookController::class)
     ->name('webhooks.stripe');
-

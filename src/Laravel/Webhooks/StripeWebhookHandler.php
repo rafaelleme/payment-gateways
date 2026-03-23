@@ -58,24 +58,59 @@ class StripeWebhookHandler
             return;
         }
 
+        // Normalize Stripe data to standard format
+        $normalizedPayment = $this->normalizePayment($data);
+
         if ($event->isPaymentSuccess()) {
             $this->logger->info('Dispatching PaymentReceived event', [
                 'event_type' => $eventType,
-                'data'       => $data,
+                'data'       => $normalizedPayment,
             ]);
-            $this->events->dispatch(new PaymentReceived($data));
+            $this->events->dispatch(new PaymentReceived($normalizedPayment));
         } elseif ($event->isPaymentFailure()) {
             $this->logger->info('Dispatching PaymentRefused event (payment failure)', [
                 'event_type' => $eventType,
-                'data'       => $data,
+                'data'       => $normalizedPayment,
             ]);
-            $this->events->dispatch(new PaymentRefused($data));
+            $this->events->dispatch(new PaymentRefused($normalizedPayment));
         } elseif ($event->isPaymentDispute()) {
             $this->logger->info('Dispatching PaymentRefused event (payment dispute)', [
                 'event_type' => $eventType,
-                'data'       => $data,
+                'data'       => $normalizedPayment,
             ]);
-            $this->events->dispatch(new PaymentRefused($data));
+            $this->events->dispatch(new PaymentRefused($normalizedPayment));
         }
+    }
+
+    /**
+     * Normalizes Stripe payment data to standard format expected by listeners.
+     * Maps Stripe invoice/charge data to id and subscription fields.
+     *
+     * @param  array<string, mixed> $data
+     * @return array<string, mixed>
+     */
+    private function normalizePayment(array $data): array
+    {
+        $normalized = $data;
+
+        // For invoices, map invoice ID
+        if (isset($data['object']) && $data['object'] === 'invoice') {
+            $normalized['id'] = $data['id'] ?? null;
+
+            // Extract subscription ID from nested parent structure
+            $subscriptionId = $data['parent']['subscription_details']['subscription'] ?? null;
+            if ($subscriptionId === null) {
+                // Fallback to subscription field if present
+                $subscriptionId = $data['subscription'] ?? null;
+            }
+
+            $normalized['subscription'] = $subscriptionId;
+        } elseif (isset($data['object']) && $data['object'] === 'charge') {
+            // For charges, map charge ID
+            $normalized['id']           = $data['id']                ?? null;
+            $normalized['subscription'] = $data['invoice'] ?? null; // invoice ID as subscription reference
+        }
+
+        return $normalized;
     }
 }

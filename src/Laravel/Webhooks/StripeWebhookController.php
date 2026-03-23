@@ -24,4 +24,3 @@ class StripeWebhookController
         return response('', Response::HTTP_OK);
     }
 }
-

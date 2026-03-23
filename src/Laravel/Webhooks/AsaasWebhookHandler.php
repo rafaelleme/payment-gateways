@@ -54,7 +54,7 @@ class AsaasWebhookHandler
     }
 
     /**
-     * @param class-string $eventClass
+     * @param class-string         $eventClass
      * @param array<string, mixed> $data
      */
     private function dispatchAndLog(string $eventClass, array $data): void
