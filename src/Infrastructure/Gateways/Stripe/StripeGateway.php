@@ -144,6 +144,13 @@ readonly class StripeGateway implements GatewayContract
             throw SubscriptionException::apiError('Price ID is required for Stripe subscriptions. Please provide a priceId.');
         }
 
+        // Attach payment method to customer if provided
+        if ($subscription->paymentMethodId !== null) {
+            $attachPayload = ['customer' => $subscription->customerId->getValue()];
+            $this->logger->info('stripe.createSubscription: attaching payment method to customer', ['paymentMethodId' => $subscription->paymentMethodId]);
+            $this->client->attachPaymentMethod($subscription->paymentMethodId, $attachPayload);
+        }
+
         // Create the subscription with pre-created price
         $subscriptionPayload = [
             'customer' => $subscription->customerId->getValue(),
@@ -152,11 +159,11 @@ readonly class StripeGateway implements GatewayContract
                     'price' => $subscription->priceId,
                 ],
             ],
-            'payment_behavior'            => 'default_incomplete',
-            'metadata' => [
+            'payment_behavior' => 'default_incomplete',
+            'metadata'         => [
                 'externalReference' => $subscription->externalReference,
             ],
-            'description'                 => $subscription->description,
+            'description' => $subscription->description,
         ];
 
         // Use provided paymentMethodId or creditCard token
