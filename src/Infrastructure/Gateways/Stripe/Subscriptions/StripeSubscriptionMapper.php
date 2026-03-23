@@ -16,11 +16,14 @@ class StripeSubscriptionMapper
     /** @param array<string, mixed> $data */
     public function toSubscription(array $data): Subscription
     {
-        $items = $data['items']['data'] ?? [];
+        $items     = $data['items']['data'] ?? [];
         $priceData = !empty($items) ? $items[0]['price'] : [];
 
         $billingCycle = $this->mapBillingCycle($priceData);
-        $value = new Money((float) ($priceData['unit_amount'] ?? 0) / 100);
+        $value        = new Money((float) ($priceData['unit_amount'] ?? 0) / 100);
+
+        $priceId         = isset($items[0]['price']['id']) ? (string) $items[0]['price']['id'] : null;
+        $paymentMethodId = isset($data['default_payment_method']) ? (string) $data['default_payment_method'] : null;
 
         return new Subscription(
             customerId:        new CustomerId((string) ($data['customer'] ?? '')),
@@ -32,13 +35,15 @@ class StripeSubscriptionMapper
             externalReference: isset($data['metadata']['externalReference']) ? (int) $data['metadata']['externalReference'] : null,
             id:                (string) $data['id'],
             status:            SubscriptionStatus::fromStripe((string) ($data['status'] ?? '')),
+            priceId:           $priceId,
+            paymentMethodId:   $paymentMethodId,
         );
     }
 
     /** @param array<string, mixed> $priceData */
     private function mapBillingCycle(array $priceData): SubscriptionCycle
     {
-        $interval = $priceData['recurring']['interval'] ?? 'month';
+        $interval      = $priceData['recurring']['interval'] ?? 'month';
         $intervalCount = (int) ($priceData['recurring']['interval_count'] ?? 1);
 
         if ($interval === 'week' && $intervalCount === 1) {
@@ -68,5 +73,3 @@ class StripeSubscriptionMapper
         return SubscriptionCycle::MONTHLY;
     }
 }
-
-

@@ -17,6 +17,14 @@ class EloquentSubscriptionRepository implements SubscriptionRepositoryContract
 {
     public function save(string $gateway, Subscription $subscription, ?int $userId = null, ?int $localCustomerId = null): void
     {
+        $metadata = [];
+        if ($subscription->priceId !== null) {
+            $metadata['priceId'] = $subscription->priceId;
+        }
+        if ($subscription->paymentMethodId !== null) {
+            $metadata['paymentMethodId'] = $subscription->paymentMethodId;
+        }
+
         GatewaySubscription::updateOrCreate(
             [
                 'gateway'                 => $gateway,
@@ -29,6 +37,7 @@ class EloquentSubscriptionRepository implements SubscriptionRepositoryContract
                 'billing_type'  => $subscription->billingType->value,
                 'value'         => $subscription->value->getAmount(),
                 'next_due_date' => $subscription->nextDueDate,
+                'metadata'      => !empty($metadata) ? $metadata : null,
             ],
         );
     }
@@ -51,13 +60,15 @@ class EloquentSubscriptionRepository implements SubscriptionRepositoryContract
         }
 
         return new Subscription(
-            customerId:  new CustomerId((string) $record->customer?->gateway_customer_id ?? ''),
-            value:       new Money((float) $record->value),
-            billingType: BillingType::from($record->billing_type),
-            cycle:       SubscriptionCycle::MONTHLY,
-            nextDueDate: $record->next_due_date?->format('Y-m-d') ?? '',
-            id:          $record->gateway_subscription_id,
-            status:      SubscriptionStatus::fromAsaas($record->status),
+            customerId:      new CustomerId((string) $record->customer?->gateway_customer_id ?? ''),
+            value:           new Money((float) $record->value),
+            billingType:     BillingType::from($record->billing_type),
+            cycle:           SubscriptionCycle::MONTHLY,
+            nextDueDate:     $record->next_due_date?->format('Y-m-d') ?? '',
+            id:              $record->gateway_subscription_id,
+            status:          SubscriptionStatus::fromAsaas($record->status),
+            priceId:         $record->metadata['priceId']         ?? null,
+            paymentMethodId: $record->metadata['paymentMethodId'] ?? null,
         );
     }
 

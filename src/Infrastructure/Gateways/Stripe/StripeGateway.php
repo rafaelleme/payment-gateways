@@ -45,11 +45,11 @@ readonly class StripeGateway implements GatewayContract
     public function createPayment(Payment $payment): Payment
     {
         $payload = [
-            'customer'             => $payment->customerId->getValue(),
-            'amount'               => (int) ($payment->value->getAmount() * 100),
-            'currency'             => strtolower($payment->value->getCurrency()),
-            'payment_method_types' => ['card'],
-            'description'          => $payment->description,
+            'customer'                    => $payment->customerId->getValue(),
+            'amount'                      => (int) ($payment->value->getAmount() * 100),
+            'currency'                    => strtolower($payment->value->getCurrency()),
+            'payment_method_types'        => ['card'],
+            'description'                 => $payment->description,
             'metadata[externalReference]' => $payment->externalReference,
         ];
 
@@ -94,10 +94,10 @@ readonly class StripeGateway implements GatewayContract
     public function createCustomer(Customer $customer): Customer
     {
         $payload = [
-            'name'                  => $customer->name,
-            'email'                 => $customer->email,
-            'phone'                 => $customer->phone,
-            'metadata[cpfCnpj]'     => $customer->cpfCnpj,
+            'name'                        => $customer->name,
+            'email'                       => $customer->email,
+            'phone'                       => $customer->phone,
+            'metadata[cpfCnpj]'           => $customer->cpfCnpj,
             'metadata[externalReference]' => $customer->externalReference,
         ];
 
@@ -141,59 +141,69 @@ readonly class StripeGateway implements GatewayContract
 
     public function createSubscription(Subscription $subscription): Subscription
     {
-        // First, get or create the product
-        $productPayload = [
-            'name'                  => 'Subscription',
-            'metadata[externalReference]' => $subscription->externalReference,
-        ];
+        // Determine priceId: use provided priceId or create product and price
+        if ($subscription->priceId !== null) {
+            $priceId = $subscription->priceId;
+            $this->logger->info('stripe.createSubscription: using provided priceId', ['priceId' => $priceId]);
+        } else {
+            // First, get or create the product
+            $productPayload = [
+                'name'                        => 'Subscription',
+                'metadata[externalReference]' => $subscription->externalReference,
+            ];
 
-        $this->logger->info('stripe.createSubscription.product: request', ['payload' => $productPayload]);
-        $productData = $this->client->createProduct($productPayload);
+            $this->logger->info('stripe.createSubscription.product: request', ['payload' => $productPayload]);
+            $productData = $this->client->createProduct($productPayload);
 
-        if (isset($productData['error'])) {
-            $message = $productData['error']['message'] ?? 'Unknown error';
-            $this->logger->error('stripe.createSubscription.product: api error', ['message' => $message]);
-            throw SubscriptionException::apiError($message);
+            if (isset($productData['error'])) {
+                $message = $productData['error']['message'] ?? 'Unknown error';
+                $this->logger->error('stripe.createSubscription.product: api error', ['message' => $message]);
+                throw SubscriptionException::apiError($message);
+            }
+
+            if (empty($productData['id'])) {
+                $this->logger->error('stripe.createSubscription.product: unexpected empty response', ['data' => $productData]);
+                throw SubscriptionException::apiError('Failed to create product in Stripe.');
+            }
+
+            $productId = $productData['id'];
+            $this->logger->info('stripe.createSubscription.product: response', ['productId' => $productId]);
+
+            // Create the price
+            $pricePayload = $this->buildPricePayload($subscription, $productId);
+
+            $this->logger->info('stripe.createSubscription.price: request', ['payload' => $pricePayload]);
+            $priceData = $this->client->createPrice($pricePayload);
+
+            if (isset($priceData['error'])) {
+                $message = $priceData['error']['message'] ?? 'Unknown error';
+                $this->logger->error('stripe.createSubscription.price: api error', ['message' => $message]);
+                throw SubscriptionException::apiError($message);
+            }
+
+            if (empty($priceData['id'])) {
+                $this->logger->error('stripe.createSubscription.price: unexpected empty response', ['data' => $priceData]);
+                throw SubscriptionException::apiError('Failed to create price in Stripe.');
+            }
+
+            $priceId = $priceData['id'];
+            $this->logger->info('stripe.createSubscription.price: response', ['priceId' => $priceId]);
         }
-
-        if (empty($productData['id'])) {
-            $this->logger->error('stripe.createSubscription.product: unexpected empty response', ['data' => $productData]);
-            throw SubscriptionException::apiError('Failed to create product in Stripe.');
-        }
-
-        $productId = $productData['id'];
-        $this->logger->info('stripe.createSubscription.product: response', ['productId' => $productId]);
-
-        // Create the price
-        $pricePayload = $this->buildPricePayload($subscription, $productId);
-
-        $this->logger->info('stripe.createSubscription.price: request', ['payload' => $pricePayload]);
-        $priceData = $this->client->createPrice($pricePayload);
-
-        if (isset($priceData['error'])) {
-            $message = $priceData['error']['message'] ?? 'Unknown error';
-            $this->logger->error('stripe.createSubscription.price: api error', ['message' => $message]);
-            throw SubscriptionException::apiError($message);
-        }
-
-        if (empty($priceData['id'])) {
-            $this->logger->error('stripe.createSubscription.price: unexpected empty response', ['data' => $priceData]);
-            throw SubscriptionException::apiError('Failed to create price in Stripe.');
-        }
-
-        $priceId = $priceData['id'];
-        $this->logger->info('stripe.createSubscription.price: response', ['priceId' => $priceId]);
 
         // Create the subscription
         $subscriptionPayload = [
-            'customer'                      => $subscription->customerId->getValue(),
-            'items[0][price]'               => $priceId,
-            'payment_behavior'              => 'default_incomplete',
-            'metadata[externalReference]'   => $subscription->externalReference,
-            'description'                   => $subscription->description,
+            'customer'                    => $subscription->customerId->getValue(),
+            'items[0][price]'             => $priceId,
+            'payment_behavior'            => 'default_incomplete',
+            'metadata[externalReference]' => $subscription->externalReference,
+            'description'                 => $subscription->description,
         ];
 
-        if ($subscription->creditCard !== null) {
+        // Use provided paymentMethodId or creditCard token
+        if ($subscription->paymentMethodId !== null) {
+            $subscriptionPayload['default_payment_method'] = $subscription->paymentMethodId;
+            $this->logger->info('stripe.createSubscription: using provided paymentMethodId', ['paymentMethodId' => $subscription->paymentMethodId]);
+        } elseif ($subscription->creditCard !== null) {
             if ($subscription->creditCard->token !== null) {
                 $subscriptionPayload['default_payment_method'] = $subscription->creditCard->token;
             }
@@ -272,11 +282,11 @@ readonly class StripeGateway implements GatewayContract
     public function tokenizeCreditCard(string $customerId, CreditCardData $cardData): CreditCardToken
     {
         $payload = [
-            'type'                 => 'card',
-            'card[number]'         => $cardData->number,
-            'card[exp_month]'      => $cardData->expiryMonth,
-            'card[exp_year]'       => $cardData->expiryYear,
-            'card[cvc]'            => $cardData->ccv,
+            'type'                  => 'card',
+            'card[number]'          => $cardData->number,
+            'card[exp_month]'       => $cardData->expiryMonth,
+            'card[exp_year]'        => $cardData->expiryYear,
+            'card[cvc]'             => $cardData->ccv,
             'billing_details[name]' => $cardData->holderName,
         ];
 
@@ -308,11 +318,11 @@ readonly class StripeGateway implements GatewayContract
     private function buildPricePayload(Subscription $subscription, string $productId): array
     {
         $payload = [
-            'product'               => $productId,
-            'amount'                => (int) ($subscription->value->getAmount() * 100),
-            'currency'              => strtolower($subscription->value->getCurrency()),
-            'billing_scheme'        => 'per_unit',
-            'recurring[interval]'   => $this->mapCycleToStripeInterval($subscription->cycle),
+            'product'                   => $productId,
+            'amount'                    => (int) ($subscription->value->getAmount() * 100),
+            'currency'                  => strtolower($subscription->value->getCurrency()),
+            'billing_scheme'            => 'per_unit',
+            'recurring[interval]'       => $this->mapCycleToStripeInterval($subscription->cycle),
             'recurring[interval_count]' => $this->mapCycleToIntervalCount($subscription->cycle),
         ];
 
@@ -343,5 +353,3 @@ readonly class StripeGateway implements GatewayContract
         };
     }
 }
-
-

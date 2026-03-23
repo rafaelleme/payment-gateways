@@ -24,6 +24,8 @@ readonly class Subscription
         public ?string             $id = null,
         public ?SubscriptionStatus $status = null,
         public ?CreditCard         $creditCard = null,
+        public ?string             $priceId = null,
+        public ?string             $paymentMethodId = null,
     ) {
     }
 
@@ -51,6 +53,8 @@ readonly class Subscription
             'nextDueDate'          => $this->nextDueDate,
             'description'          => $this->description,
             'externalReference'    => $this->externalReference,
+            'priceId'              => $this->priceId,
+            'paymentMethodId'      => $this->paymentMethodId,
             'creditCardToken'      => $this->creditCard?->token,
             'creditCardHolderInfo' => $this->creditCard?->holderInfo->toArray(),
         ];

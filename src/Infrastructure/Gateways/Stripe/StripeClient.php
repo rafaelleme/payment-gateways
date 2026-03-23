@@ -147,9 +147,7 @@ class StripeClient
     {
         return $this->http->post(
             "/v1/payment_methods/{$paymentMethodId}/attach",
-            ['form_params' => $payload]
+            ['form_params' => $payload],
         );
     }
 }
-
-
