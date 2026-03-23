@@ -15,6 +15,8 @@ use Rafaelleme\PaymentGateways\Core\Domain\Contracts\PaymentRepositoryContract;
 use Rafaelleme\PaymentGateways\Core\Domain\Contracts\SubscriptionRepositoryContract;
 use Rafaelleme\PaymentGateways\Infrastructure\Gateways\Asaas\AsaasClient;
 use Rafaelleme\PaymentGateways\Infrastructure\Gateways\Asaas\AsaasGateway;
+use Rafaelleme\PaymentGateways\Infrastructure\Gateways\Stripe\StripeClient;
+use Rafaelleme\PaymentGateways\Infrastructure\Gateways\Stripe\StripeGateway;
 use Rafaelleme\PaymentGateways\Laravel\Commands\InstallCommand;
 use Rafaelleme\PaymentGateways\Laravel\Repositories\EloquentCustomerRepository;
 use Rafaelleme\PaymentGateways\Laravel\Repositories\EloquentPaymentRepository;
@@ -50,6 +52,18 @@ class PaymentGatewaysServiceProvider extends ServiceProvider
                     client: new AsaasClient(
                         apiKey:  $asaasConfig['api_key'],
                         baseUrl: $asaasConfig['base_url'] ?? 'https://api.asaas.com',
+                    ),
+                    logger: $app->make('log'),
+                );
+            });
+
+            $manager->register('stripe', function () use ($config, $app) {
+                $stripeConfig = $config['gateways']['stripe'];
+
+                return new StripeGateway(
+                    client: new StripeClient(
+                        apiKey:  $stripeConfig['api_key'],
+                        baseUrl: $stripeConfig['base_url'] ?? 'https://api.stripe.com',
                     ),
                     logger: $app->make('log'),
                 );

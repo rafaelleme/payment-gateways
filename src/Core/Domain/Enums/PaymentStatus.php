@@ -26,6 +26,19 @@ enum PaymentStatus: string
         };
     }
 
+    public static function fromStripe(string $value): self
+    {
+        return match ($value) {
+            'succeeded'               => self::RECEIVED,
+            'processing'              => self::CONFIRMED,
+            'requires_payment_method' => self::PENDING,
+            'requires_action'         => self::PENDING,
+            'requires_capture'        => self::CONFIRMED,
+            'canceled'                => self::CANCELLED,
+            default                   => self::FAILED,
+        };
+    }
+
     public function label(): string
     {
         return match ($this) {

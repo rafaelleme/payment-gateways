@@ -25,6 +25,17 @@ enum BillingType: string
         };
     }
 
+    public static function fromStripe(string $value): self
+    {
+        return match ($value) {
+            'card'         => self::CREDIT_CARD,
+            'boleto'       => self::BOLETO,
+            'pix'          => self::PIX,
+            'bank_account' => self::TRANSFER,
+            default        => self::UNDEFINED,
+        };
+    }
+
     public function label(): string
     {
         return match ($this) {

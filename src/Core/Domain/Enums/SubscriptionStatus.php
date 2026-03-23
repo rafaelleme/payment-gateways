@@ -19,6 +19,20 @@ enum SubscriptionStatus: string
         };
     }
 
+    public static function fromStripe(string $value): self
+    {
+        return match ($value) {
+            'active'             => self::ACTIVE,
+            'past_due'           => self::ACTIVE,
+            'paused'             => self::INACTIVE,
+            'canceled'           => self::INACTIVE,
+            'unpaid'             => self::INACTIVE,
+            'incomplete'         => self::INACTIVE,
+            'incomplete_expired' => self::INACTIVE,
+            default              => self::INACTIVE,
+        };
+    }
+
     public function label(): string
     {
         return match ($this) {

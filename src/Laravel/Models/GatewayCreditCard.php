@@ -27,4 +27,3 @@ class GatewayCreditCard extends Model
         'metadata' => 'array',
     ];
 }
-
