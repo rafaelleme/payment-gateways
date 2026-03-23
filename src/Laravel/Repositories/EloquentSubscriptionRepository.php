@@ -35,7 +35,7 @@ class EloquentSubscriptionRepository implements SubscriptionRepositoryContract
                 'customer_id'   => $localCustomerId,
                 'status'        => $subscription->status?->value ?? 'ACTIVE',
                 'billing_type'  => $subscription->billingType->value,
-                'value'         => $subscription->value->getAmount(),
+                'value'         => $subscription->value?->getAmount(),
                 'next_due_date' => $subscription->nextDueDate,
                 'metadata'      => !empty($metadata) ? $metadata : null,
             ],
@@ -59,12 +59,14 @@ class EloquentSubscriptionRepository implements SubscriptionRepositoryContract
             return null;
         }
 
+        $value = $record->value !== null ? new Money((float) $record->value) : null;
+
         return new Subscription(
             customerId:      new CustomerId((string) $record->customer?->gateway_customer_id ?? ''),
-            value:           new Money((float) $record->value),
             billingType:     BillingType::from($record->billing_type),
             cycle:           SubscriptionCycle::MONTHLY,
             nextDueDate:     $record->next_due_date?->format('Y-m-d') ?? '',
+            value:           $value,
             id:              $record->gateway_subscription_id,
             status:          SubscriptionStatus::fromAsaas($record->status),
             priceId:         $record->metadata['priceId']         ?? null,

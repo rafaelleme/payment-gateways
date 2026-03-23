@@ -26,17 +26,17 @@ class StripeSubscriptionMapper
         $paymentMethodId = isset($data['default_payment_method']) ? (string) $data['default_payment_method'] : null;
 
         return new Subscription(
-            customerId:        new CustomerId((string) ($data['customer'] ?? '')),
-            value:             $value,
-            billingType:       BillingType::CREDIT_CARD,
-            cycle:             $billingCycle,
-            nextDueDate:       isset($data['current_period_end']) ? date('Y-m-d', (int) $data['current_period_end']) : date('Y-m-d'),
-            description:       isset($data['description']) ? (string) $data['description'] : null,
+            customerId:      new CustomerId((string) ($data['customer'] ?? '')),
+            billingType:     BillingType::CREDIT_CARD,
+            cycle:           $billingCycle,
+            nextDueDate:     isset($data['current_period_end']) ? date('Y-m-d', (int) $data['current_period_end']) : date('Y-m-d'),
+            value:           $value,
+            description:     isset($data['description']) ? (string) $data['description'] : null,
             externalReference: isset($data['metadata']['externalReference']) ? (int) $data['metadata']['externalReference'] : null,
-            id:                (string) $data['id'],
-            status:            SubscriptionStatus::fromStripe((string) ($data['status'] ?? '')),
-            priceId:           $priceId,
-            paymentMethodId:   $paymentMethodId,
+            id:              (string) $data['id'],
+            status:          SubscriptionStatus::fromStripe((string) ($data['status'] ?? '')),
+            priceId:         $priceId,
+            paymentMethodId: $paymentMethodId,
         );
     }
 

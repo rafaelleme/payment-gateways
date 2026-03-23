@@ -144,6 +144,10 @@ readonly class AsaasGateway implements GatewayContract
 
     public function createSubscription(Subscription $subscription): Subscription
     {
+        if ($subscription->value === null) {
+            throw SubscriptionException::apiError('Value is required when creating a subscription in Asaas.');
+        }
+
         $payload = [
             'customer'          => $subscription->customerId->getValue(),
             'billingType'       => $subscription->billingType->value,

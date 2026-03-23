@@ -15,10 +15,10 @@ readonly class Subscription
 {
     public function __construct(
         public CustomerId          $customerId,
-        public Money               $value,
         public BillingType         $billingType,
         public SubscriptionCycle   $cycle,
         public string              $nextDueDate,
+        public ?Money              $value = null,
         public ?string             $description = null,
         public ?int                $externalReference = null,
         public ?string             $id = null,
@@ -46,8 +46,8 @@ readonly class Subscription
             'id'                   => $this->id,
             'status'               => $this->status?->value,
             'customerId'           => $this->customerId->getValue(),
-            'value'                => $this->value->getAmount(),
-            'currency'             => $this->value->getCurrency(),
+            'value'                => $this->value?->getAmount(),
+            'currency'             => $this->value?->getCurrency(),
             'billingType'          => $this->billingType->value,
             'cycle'                => $this->cycle->value,
             'nextDueDate'          => $this->nextDueDate,

@@ -317,6 +317,10 @@ readonly class StripeGateway implements GatewayContract
     /** @return array<string, int|string> */
     private function buildPricePayload(Subscription $subscription, string $productId): array
     {
+        if ($subscription->value === null) {
+            throw SubscriptionException::apiError('Value is required when creating a price. Please provide a value or use a pre-created priceId.');
+        }
+
         $payload = [
             'product'                   => $productId,
             'amount'                    => (int) ($subscription->value->getAmount() * 100),
