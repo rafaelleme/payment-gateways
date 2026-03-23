@@ -70,7 +70,7 @@ class UpdateStripePaymentStatusOnWebhook
 
         $subscriptionId = (string) ($payment['subscription'] ?? '');
 
-        if ($subscriptionId !== '' && $status->isFailure()) {
+        if ($subscriptionId !== '') {
             $this->subscriptionRepository->updateStatus(self::GATEWAY, $subscriptionId, $status->value);
         }
     }
