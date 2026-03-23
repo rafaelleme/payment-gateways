@@ -43,31 +43,55 @@ class PaymentGatewaysServiceProvider extends ServiceProvider
             $config  = $app['config']['payment-gateways'];
             $default = $config['default'] ?? 'asaas';
 
+            // Validate default gateway is properly configured
+            if (empty($default)) {
+                throw new \InvalidArgumentException(
+                    'Payment gateway default driver is not configured. ' .
+                    'Set PAYMENT_GATEWAY_DEFAULT in .env or "default" in payment-gateways config.',
+                );
+            }
+
             $manager = new GatewayManager($default);
 
-            $manager->register('asaas', function () use ($config, $app) {
-                $asaasConfig = $config['gateways']['asaas'];
+            // Register Asaas gateway
+            if (isset($config['gateways']['asaas'])) {
+                $manager->register('asaas', function () use ($config, $app) {
+                    $asaasConfig = $config['gateways']['asaas'];
 
-                return new AsaasGateway(
-                    client: new AsaasClient(
-                        apiKey:  $asaasConfig['api_key'],
-                        baseUrl: $asaasConfig['base_url'] ?? 'https://api.asaas.com',
-                    ),
-                    logger: $app->make('log'),
+                    return new AsaasGateway(
+                        client: new AsaasClient(
+                            apiKey:  $asaasConfig['api_key'],
+                            baseUrl: $asaasConfig['base_url'] ?? 'https://api.asaas.com',
+                        ),
+                        logger: $app->make('log'),
+                    );
+                });
+            }
+
+            // Register Stripe gateway
+            if (isset($config['gateways']['stripe'])) {
+                $manager->register('stripe', function () use ($config, $app) {
+                    $stripeConfig = $config['gateways']['stripe'];
+
+                    return new StripeGateway(
+                        client: new StripeClient(
+                            apiKey:  $stripeConfig['api_key'],
+                            baseUrl: $stripeConfig['base_url'] ?? 'https://api.stripe.com',
+                        ),
+                        logger: $app->make('log'),
+                    );
+                });
+            }
+
+            // Validate that default gateway is registered
+            if (!$manager->has($default)) {
+                $registered = implode(', ', $manager->getRegisteredGateways());
+                throw new \InvalidArgumentException(
+                    "Payment gateway [{$default}] is not configured in payment-gateways config. " .
+                    "Configured gateways: {$registered}. " .
+                    "Ensure the gateway configuration exists in 'gateways' section.",
                 );
-            });
-
-            $manager->register('stripe', function () use ($config, $app) {
-                $stripeConfig = $config['gateways']['stripe'];
-
-                return new StripeGateway(
-                    client: new StripeClient(
-                        apiKey:  $stripeConfig['api_key'],
-                        baseUrl: $stripeConfig['base_url'] ?? 'https://api.stripe.com',
-                    ),
-                    logger: $app->make('log'),
-                );
-            });
+            }
 
             return $manager;
         });

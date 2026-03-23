@@ -80,4 +80,26 @@ class GatewayManagerTest extends TestCase
         $this->assertTrue($manager->has('asaas'));
         $this->assertFalse($manager->has('stripe'));
     }
+
+    public function test_get_registered_gateways(): void
+    {
+        $manager = new GatewayManager();
+        $manager->register('asaas', fn () => $this->createMock(GatewayContract::class));
+        $manager->register('stripe', fn () => $this->createMock(GatewayContract::class));
+
+        $registered = $manager->getRegisteredGateways();
+
+        $this->assertContains('asaas', $registered);
+        $this->assertContains('stripe', $registered);
+        $this->assertCount(2, $registered);
+    }
+
+    public function test_is_registered(): void
+    {
+        $manager = new GatewayManager();
+        $manager->register('asaas', fn () => $this->createMock(GatewayContract::class));
+
+        $this->assertTrue($manager->isRegistered('asaas'));
+        $this->assertFalse($manager->isRegistered('stripe'));
+    }
 }

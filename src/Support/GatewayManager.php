@@ -49,8 +49,9 @@ class GatewayManager
         $name ??= $this->getDefaultDriver();
 
         if (!isset($this->factories[$name])) {
+            $registered = implode(', ', array_keys($this->factories));
             throw new InvalidArgumentException(
-                "Payment gateway [{$name}] is not registered.",
+                "Payment gateway [{$name}] is not registered. Registered gateways: {$registered}",
             );
         }
 
@@ -88,6 +89,24 @@ class GatewayManager
     public function has(string $name): bool
     {
         return isset($this->factories[$name]);
+    }
+
+    /**
+     * Get list of registered gateway names.
+     *
+     * @return array<int, string>
+     */
+    public function getRegisteredGateways(): array
+    {
+        return array_keys($this->factories);
+    }
+
+    /**
+     * Check if a specific gateway factory exists.
+     */
+    public function isRegistered(string $name): bool
+    {
+        return $this->has($name);
     }
 
     /**
