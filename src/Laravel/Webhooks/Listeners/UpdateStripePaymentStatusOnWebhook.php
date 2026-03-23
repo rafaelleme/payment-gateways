@@ -28,6 +28,11 @@ class UpdateStripePaymentStatusOnWebhook
 
     public function handleReceived(PaymentReceived $event): void
     {
+        // Only handle Stripe payments
+        if (($event->payment['gateway'] ?? null) !== self::GATEWAY) {
+            return;
+        }
+
         $this->update($event->payment, PaymentStatus::RECEIVED);
 
         $subscriptionId = (string) ($event->payment['subscription'] ?? '');
@@ -48,6 +53,11 @@ class UpdateStripePaymentStatusOnWebhook
 
     public function handleRefused(PaymentRefused $event): void
     {
+        // Only handle Stripe payments
+        if (($event->payment['gateway'] ?? null) !== self::GATEWAY) {
+            return;
+        }
+
         $this->update($event->payment, PaymentStatus::FAILED);
         $this->markFailedAt($event->payment);
 

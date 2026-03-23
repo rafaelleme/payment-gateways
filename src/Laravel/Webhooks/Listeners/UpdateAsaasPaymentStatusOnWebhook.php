@@ -29,6 +29,11 @@ class UpdateAsaasPaymentStatusOnWebhook
 
     public function handleReceived(PaymentReceived $event): void
     {
+        // Only handle Asaas payments
+        if (($event->payment['gateway'] ?? null) !== self::GATEWAY) {
+            return;
+        }
+
         $this->update($event->payment, PaymentStatus::RECEIVED);
 
         $subscriptionId = (string) ($event->payment['subscription'] ?? '');
@@ -49,6 +54,11 @@ class UpdateAsaasPaymentStatusOnWebhook
 
     public function handleOverdue(PaymentOverdue $event): void
     {
+        // Only handle Asaas payments
+        if (($event->payment['gateway'] ?? null) !== self::GATEWAY) {
+            return;
+        }
+
         $this->update($event->payment, PaymentStatus::OVERDUE);
         $this->markFailedAt($event->payment);
 
@@ -61,6 +71,11 @@ class UpdateAsaasPaymentStatusOnWebhook
 
     public function handleRefused(PaymentRefused $event): void
     {
+        // Only handle Asaas payments
+        if (($event->payment['gateway'] ?? null) !== self::GATEWAY) {
+            return;
+        }
+
         $this->update($event->payment, PaymentStatus::FAILED);
         $this->markFailedAt($event->payment);
 

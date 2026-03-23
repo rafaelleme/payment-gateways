@@ -43,6 +43,9 @@ class AsaasWebhookHandler
 
         $dispatchEvent = $event->toDispatchEvent();
 
+        // Add gateway identifier to payload
+        $payment['gateway'] = 'asaas';
+
         match ($dispatchEvent) {
             'received' => $this->dispatchAndLog(PaymentReceived::class, $payment),
             'overdue'  => $this->dispatchAndLog(PaymentOverdue::class, $payment),

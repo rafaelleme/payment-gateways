@@ -60,6 +60,8 @@ class StripeWebhookHandler
 
         // Normalize Stripe data to standard format
         $normalizedPayment = $this->normalizePayment($data);
+        // Add gateway identifier to payload
+        $normalizedPayment['gateway'] = 'stripe';
 
         if ($event->isPaymentSuccess()) {
             $this->logger->info('Dispatching PaymentReceived event', [
@@ -107,7 +109,7 @@ class StripeWebhookHandler
             $normalized['subscription'] = $subscriptionId;
         } elseif (isset($data['object']) && $data['object'] === 'charge') {
             // For charges, map charge ID
-            $normalized['id']           = $data['id']                ?? null;
+            $normalized['id']           = $data['id']      ?? null;
             $normalized['subscription'] = $data['invoice'] ?? null; // invoice ID as subscription reference
         }
 
