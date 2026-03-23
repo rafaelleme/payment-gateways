@@ -8,6 +8,7 @@ use Illuminate\Contracts\Events\Dispatcher;
 use Rafaelleme\PaymentGateways\Core\Domain\Contracts\PaymentRepositoryContract;
 use Rafaelleme\PaymentGateways\Core\Domain\Contracts\SubscriptionRepositoryContract;
 use Rafaelleme\PaymentGateways\Core\Domain\Enums\PaymentStatus;
+use Rafaelleme\PaymentGateways\Core\Domain\Enums\SubscriptionStatus;
 use Rafaelleme\PaymentGateways\Laravel\Models\GatewaySubscription;
 use Rafaelleme\PaymentGateways\Laravel\Webhooks\Events\PaymentOverdue;
 use Rafaelleme\PaymentGateways\Laravel\Webhooks\Events\PaymentReceived;
@@ -84,8 +85,26 @@ class UpdateAsaasPaymentStatusOnWebhook
         $subscriptionId = (string) ($payment['subscription'] ?? '');
 
         if ($subscriptionId !== '') {
-            $this->subscriptionRepository->updateStatus(self::GATEWAY, $subscriptionId, $status->value);
+            $subscriptionStatus = $this->mapPaymentStatusToSubscriptionStatus($status);
+            $this->subscriptionRepository->updateStatus(self::GATEWAY, $subscriptionId, $subscriptionStatus->value);
         }
+    }
+
+    /**
+     * Maps PaymentStatus to SubscriptionStatus.
+     * - RECEIVED or CONFIRMED → ACTIVE (payment successful)
+     * - FAILED, OVERDUE → INACTIVE (payment failed or overdue)
+     * - Other → INACTIVE (conservative default)
+     */
+    private function mapPaymentStatusToSubscriptionStatus(PaymentStatus $status): SubscriptionStatus
+    {
+        return match ($status) {
+            PaymentStatus::RECEIVED,
+            PaymentStatus::CONFIRMED => SubscriptionStatus::ACTIVE,
+            PaymentStatus::FAILED,
+            PaymentStatus::OVERDUE => SubscriptionStatus::INACTIVE,
+            default                => SubscriptionStatus::INACTIVE,
+        };
     }
 
     /** @param array<string, mixed> $payment */
