@@ -6,6 +6,7 @@ namespace Rafaelleme\PaymentGateways\Laravel;
 
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Support\ServiceProvider;
+use Rafaelleme\PaymentGateways\Core\Application\Services\CouponService;
 use Rafaelleme\PaymentGateways\Core\Application\Services\CustomerService;
 use Rafaelleme\PaymentGateways\Core\Application\Services\PaymentService;
 use Rafaelleme\PaymentGateways\Core\Application\Services\SubscriptionService;
@@ -18,6 +19,7 @@ use Rafaelleme\PaymentGateways\Infrastructure\Gateways\Asaas\AsaasGateway;
 use Rafaelleme\PaymentGateways\Infrastructure\Gateways\Stripe\StripeClient;
 use Rafaelleme\PaymentGateways\Infrastructure\Gateways\Stripe\StripeGateway;
 use Rafaelleme\PaymentGateways\Laravel\Commands\InstallCommand;
+use Rafaelleme\PaymentGateways\Laravel\Repositories\EloquentCouponRepository;
 use Rafaelleme\PaymentGateways\Laravel\Repositories\EloquentCustomerRepository;
 use Rafaelleme\PaymentGateways\Laravel\Repositories\EloquentPaymentRepository;
 use Rafaelleme\PaymentGateways\Laravel\Repositories\EloquentSubscriptionRepository;
@@ -105,6 +107,9 @@ class PaymentGatewaysServiceProvider extends ServiceProvider
         $this->app->bind(CustomerRepositoryContract::class, EloquentCustomerRepository::class);
         $this->app->bind(PaymentRepositoryContract::class, EloquentPaymentRepository::class);
         $this->app->bind(SubscriptionRepositoryContract::class, EloquentSubscriptionRepository::class);
+        $this->app->singleton(EloquentCouponRepository::class, function ($app) {
+            return new EloquentCouponRepository();
+        });
 
         // --- Persistent services ---
         $this->app->bind(PersistentCustomerService::class, function ($app) {
@@ -131,6 +136,10 @@ class PaymentGatewaysServiceProvider extends ServiceProvider
                 subscriptionRepository: $app->make(SubscriptionRepositoryContract::class),
                 gateway:                $app['config']['payment-gateways']['default'] ?? 'asaas',
             );
+        });
+
+        $this->app->bind(CouponService::class, function ($app) {
+            return new CouponService($app->make(GatewayContract::class));
         });
 
         // --- Webhook handlers ---
@@ -193,6 +202,7 @@ class PaymentGatewaysServiceProvider extends ServiceProvider
         }
 
         $this->loadRoutesFrom(__DIR__ . '/routes/webhooks.php');
+        $this->loadRoutesFrom(__DIR__ . '/routes/coupons.php');
 
         // Register webhook listeners for DB persistence
         /** @var Dispatcher $events */
