@@ -7,6 +7,7 @@ namespace Rafaelleme\PaymentGateways\Core\Domain\Entities;
 use Rafaelleme\PaymentGateways\Core\Domain\Enums\BillingType;
 use Rafaelleme\PaymentGateways\Core\Domain\Enums\SubscriptionCycle;
 use Rafaelleme\PaymentGateways\Core\Domain\Enums\SubscriptionStatus;
+use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\Coupon;
 use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\CreditCard;
 use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\CustomerId;
 use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\Money;
@@ -26,6 +27,7 @@ readonly class Subscription
         public ?CreditCard         $creditCard = null,
         public ?string             $priceId = null,
         public ?string             $paymentMethodId = null,
+        public ?Coupon             $coupon = null,
     ) {
     }
 
@@ -57,6 +59,8 @@ readonly class Subscription
             'paymentMethodId'      => $this->paymentMethodId,
             'creditCardToken'      => $this->creditCard?->token,
             'creditCardHolderInfo' => $this->creditCard?->holderInfo->toArray(),
+            'couponCode'           => $this->coupon?->getCode(),
+            'couponDiscount'       => $this->coupon?->getDiscountPercentage(),
         ];
     }
 }

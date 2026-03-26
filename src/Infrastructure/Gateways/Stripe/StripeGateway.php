@@ -166,6 +166,16 @@ readonly class StripeGateway implements GatewayContract
             'description' => $subscription->description,
         ];
 
+        // Add coupon if provided
+        if ($subscription->coupon !== null) {
+            $subscriptionPayload['discounts'] = [
+                [
+                    'coupon' => $subscription->coupon->getCode(),
+                ],
+            ];
+            $this->logger->info('stripe.createSubscription: applying coupon', ['coupon' => $subscription->coupon->getCode()]);
+        }
+
         // Use provided paymentMethodId or creditCard token
         if ($subscription->paymentMethodId !== null) {
             $subscriptionPayload['default_payment_method'] = $subscription->paymentMethodId;
@@ -279,5 +289,40 @@ readonly class StripeGateway implements GatewayContract
         $this->client->attachPaymentMethod($data['id'], $attachPayload);
 
         return $this->creditCardMapper->toToken($data);
+    }
+
+    // --- Coupons ---
+
+    public function applyCouponToSubscription(string $subscriptionId, string $couponCode): Subscription
+    {
+        $this->logger->info('stripe.applyCouponToSubscription: request', [
+            'subscriptionId' => $subscriptionId,
+            'couponCode'     => $couponCode,
+        ]);
+
+        $payload = [
+            'discounts' => [
+                [
+                    'coupon' => $couponCode,
+                ],
+            ],
+        ];
+
+        $data = $this->client->updateSubscription($subscriptionId, $payload);
+
+        $this->logger->info('stripe.applyCouponToSubscription: response', ['data' => $data]);
+
+        if (isset($data['error'])) {
+            $message = $data['error']['message'] ?? 'Unknown error';
+            $this->logger->error('stripe.applyCouponToSubscription: api error', ['message' => $message]);
+            throw SubscriptionException::apiError($message);
+        }
+
+        if (empty($data['id'])) {
+            $this->logger->error('stripe.applyCouponToSubscription: unexpected empty response', ['data' => $data]);
+            throw SubscriptionException::apiError('Unexpected empty response from Stripe API.');
+        }
+
+        return $this->subscriptionMapper->toSubscription($data);
     }
 }

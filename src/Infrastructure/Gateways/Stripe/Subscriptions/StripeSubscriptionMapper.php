@@ -8,8 +8,10 @@ use Rafaelleme\PaymentGateways\Core\Domain\Entities\Subscription;
 use Rafaelleme\PaymentGateways\Core\Domain\Enums\BillingType;
 use Rafaelleme\PaymentGateways\Core\Domain\Enums\SubscriptionCycle;
 use Rafaelleme\PaymentGateways\Core\Domain\Enums\SubscriptionStatus;
+use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\Coupon;
 use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\CustomerId;
 use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\Money;
+use Rafaelleme\PaymentGateways\Infrastructure\Gateways\Stripe\Coupons\StripeCouponMapper;
 
 class StripeSubscriptionMapper
 {
@@ -25,6 +27,14 @@ class StripeSubscriptionMapper
         $priceId         = isset($items[0]['price']['id']) ? (string) $items[0]['price']['id'] : null;
         $paymentMethodId = isset($data['default_payment_method']) ? (string) $data['default_payment_method'] : null;
 
+        // Extract coupon from discount if present
+        $coupon   = null;
+        $discount = $data['discount'] ?? null;
+        if ($discount && isset($discount['coupon'])) {
+            $couponMapper = new StripeCouponMapper();
+            $coupon       = $couponMapper->toCoupon($discount['coupon']);
+        }
+
         return new Subscription(
             customerId:      new CustomerId((string) ($data['customer'] ?? '')),
             billingType:     BillingType::CREDIT_CARD,
@@ -37,6 +47,7 @@ class StripeSubscriptionMapper
             status:          SubscriptionStatus::fromStripe((string) ($data['status'] ?? '')),
             priceId:         $priceId,
             paymentMethodId: $paymentMethodId,
+            coupon:          $coupon,
         );
     }
 

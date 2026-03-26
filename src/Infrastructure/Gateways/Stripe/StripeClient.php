@@ -150,4 +150,30 @@ class StripeClient
             ['form_params' => $payload],
         );
     }
+
+    // --- Coupons ---
+
+    /**
+     * @param  array<string, mixed> $payload
+     * @return array<string, mixed>
+     */
+    public function createCoupon(array $payload): array
+    {
+        return $this->http->post('/v1/coupons', ['form_params' => $payload]);
+    }
+
+    /** @return array<string, mixed> */
+    public function getCoupon(string $couponId): array
+    {
+        return $this->http->get("/v1/coupons/{$couponId}");
+    }
+
+    /**
+     * @param  array<string, mixed> $payload
+     * @return array<string, mixed>
+     */
+    public function updateSubscription(string $subscriptionId, array $payload): array
+    {
+        return $this->http->post("/v1/subscriptions/{$subscriptionId}", ['form_params' => $payload]);
+    }
 }

@@ -409,3 +409,38 @@ docker compose run --rm php ./vendor/bin/php-cs-fixer fix
 ## License
 
 MIT
+
+## Coupons (Stripe)
+
+### Apply a coupon to a new subscription
+
+```php
+use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\Coupon;
+
+$subscription = new Subscription(
+    // ...
+    coupon: new Coupon(
+        code:                'DISCOUNT50',
+        discountPercentage:  '50',
+    ),
+);
+
+$createdSubscription = PaymentGateway::createSubscription($subscription);
+```
+
+### Apply a coupon to an existing subscription
+
+```php
+use Rafaelleme\PaymentGateways\Core\Application\Services\CouponService;
+use Rafaelleme\PaymentGateways\Core\Domain\ValueObjects\Coupon;
+
+$couponService = app(CouponService::class);
+
+$updatedSubscription = $couponService->applyCouponToSubscription(
+    subscriptionId: 'sub_abc123',
+    coupon: new Coupon(
+        code:                'WELCOME20',
+        discountPercentage:  '20',
+    ),
+);
+```
